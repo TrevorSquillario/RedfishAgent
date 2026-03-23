@@ -1,0 +1,100 @@
+# This is an example configuration file for the iDRAC exporter,
+# including default values and equivalent environment variables.
+# The environment variables take precedence over the values in
+# the configuration file.
+#
+# Environment variables can also be referenced in the configuration
+# file using the syntax ${MY_VARIABLE}
+
+# Listen address
+# Default value: 0.0.0.0
+# Environment variable CONFIG_ADDRESS=0.0.0.0
+address: 0.0.0.0
+
+# Listen port
+# Default value: 9348
+# Environment variable CONFIG_PORT=9348
+port: 9348
+
+# HTTP timeout in seconds for Redfish API calls
+# Default value: 10
+# Environment variable CONFIG_TIMEOUT=10
+timeout: 10
+
+# Prefix for the exported metrics
+# Default value: idrac
+# Environment variable CONFIG_METRICS_PREFIX=idrac
+metrics_prefix: idrac
+
+# Enable the use of an https proxy for all requests
+# Environment variable: HTTPS_PROXY=http://localhost:8888
+#https_proxy: http://localhost:8888
+
+# The TLS section is used to enable HTTPS for the exporter. To enable TLS you
+# need a PEM encoded certificate and private key. The public certificate must
+# include the entire chain of trust.
+# TLS can also be configured using the corresponding environment variables.
+tls:
+  enabled: false  # CONFIG_TLS_ENABLED=false
+  cert_file: ""   # CONFIG_TLS_CERT_FILE=
+  key_file: ""    # CONFIG_TLS_KEY_FILE=
+
+# When setting this variable, the specified target will be used when the metrics
+# endpoint is called without the target parameter. Unset by default.
+# Environment variable: CONFIG_DEFAULT_TARGET=192.168.1.1
+default_target: "192.168.1.1"
+
+# The hosts section is used to define login credentials for the different targets.
+# Hosts can be referenced either via their IP address or their hostname, as long
+# as it matches the "target" parameter when scraping the metrics. Optionally you
+# can also specify a scheme (http or https) for accessing the Redfish API, which
+# automatically defaults to https. You can also specify a custom port if the server
+# is not using the default port (443 for https, 80 for http).
+#
+# The option "use_basic_auth" can be used to disable session authentication (which
+# is used by default) and always use HTTP basic auth. This is NOT recommended and
+# it should only be used if there is an actual reason.
+#
+# When the "target" parameter does not match any host, the exporter will attempt
+# to use the login credentials under "default". The credentials under "default"
+# can also be configured using environment variables, but this is not possible
+# for any of the other targets.
+# hosts:
+#   default:
+#     username: root         # CONFIG_DEFAULT_USERNAME=user
+#     password: calvin       # CONFIG_DEFAULT_PASSWORD=pass
+#     scheme: https          # CONFIG_DEFAULT_SCHEME=https
+#     port: 8443             # CONFIG_DEFAULT_PORT=8443
+#     use_basic_auth: true   # CONFIG_DEFAULT_USE_BASIC_AUTH=true
+
+# The auths section has the same structure as the hosts section. Here you can
+# define credentials for a group of hosts. When scraping a target you can
+# reference the group via the "auth" query parameter. This is similar to what
+# the SNMP exporter does.
+#auths:
+#  mygroup:
+#    username: user
+#    password: pass
+
+# The metrics section is used to select different groups of metrics.
+# See the README file for a detailed list of metrics in each group.
+# Each section can also be enabled using the shown environment variable.
+# The group "all" overrides all other groups and enables all metrics.
+metrics:
+  all: false         # CONFIG_METRICS_ALL=false
+  processors: true  # CONFIG_METRICS_PROCESSORS=false
+  system: false      # CONFIG_METRICS_SYSTEM=false
+  sensors: false     # CONFIG_METRICS_SENSORS=false
+  power: false       # CONFIG_METRICS_POWER=false
+  events: false      # CONFIG_METRICS_EVENTS=false
+  storage: false     # CONFIG_METRICS_STORAGE=false
+  memory: false      # CONFIG_METRICS_MEMORY=false
+  network: false     # CONFIG_METRICS_NETWORK=false
+  extra: false       # CONFIG_METRICS_EXTRA=false
+
+# The events section is used for filtering events when the "events" metrics group
+# is enabled. Events can be filtered based on minimum severity and maximum age.
+# Severity must be one of "ok", "warning", "critical"
+events:
+  severity: warning  # CONFIG_EVENTS_SEVERITY=warning
+  maxage: 7d         # CONFIG_EVENTS_MAXAGE=7d

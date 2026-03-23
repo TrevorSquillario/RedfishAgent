@@ -1,0 +1,1973 @@
+{
+    "@odata.type": "#MetricReport.v1_5_0.MetricReport",
+    "@odata.context": "/redfish/v1/$metadata#MetricReport.MetricReport",
+    "@odata.id": "/redfish/v1/TelemetryService/MetricReports/ThermalMetrics",
+    "Id": "ThermalMetrics",
+    "Name": "ThermalMetrics Metric Report",
+    "ReportSequence": "1015",
+    "Timestamp": "2025-02-01T20:08:28.000Z",
+    "MetricReportDefinition": {
+        "@odata.id": "/redfish/v1/TelemetryService/MetricReportDefinitions/ThermalMetrics"
+    },
+    "MetricValues": [
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:08:27.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:08:27.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:08:27.047Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:08:27.047Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:08:26.228Z",
+            "MetricValue": "83.099998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:08:25.958Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:08:25.153Z",
+            "MetricValue": "88.599998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:08:24.873Z",
+            "MetricValue": "434",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:08:24.873Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:08:24.873Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:08:23.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:08:22.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:08:22.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:08:22.047Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:08:22.047Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:08:21.228Z",
+            "MetricValue": "83.099998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:08:20.958Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:08:20.153Z",
+            "MetricValue": "88.599998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:08:19.873Z",
+            "MetricValue": "434",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:08:19.873Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:08:19.873Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:08:18.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:08:17.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:08:17.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:08:17.047Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:08:17.047Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:08:16.228Z",
+            "MetricValue": "83.099998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:08:15.958Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:08:15.704Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:08:15.704Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:08:15.153Z",
+            "MetricValue": "435",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:08:13.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:08:12.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:08:12.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:08:12.047Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:08:12.047Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:08:11.228Z",
+            "MetricValue": "83.099998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:08:10.958Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:08:10.704Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:08:10.704Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:08:10.683Z",
+            "MetricValue": "88.699997",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:08:10.430Z",
+            "MetricValue": "434",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:08:08.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:08:07.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:08:07.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:08:07.047Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:08:07.047Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:08:06.498Z",
+            "MetricValue": "435",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:08:06.228Z",
+            "MetricValue": "83.099998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:08:05.958Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:08:05.704Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:08:05.704Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:08:03.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:08:02.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:08:02.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:08:02.047Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:08:02.047Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:08:01.498Z",
+            "MetricValue": "435",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:08:01.228Z",
+            "MetricValue": "83.099998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:08:01.228Z",
+            "MetricValue": "88.599998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:08:00.704Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:08:00.704Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:07:58.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:07:57.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:07:57.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:07:57.047Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:07:57.047Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:07:56.573Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:07:56.498Z",
+            "MetricValue": "435",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:07:56.228Z",
+            "MetricValue": "83.099998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:07:56.228Z",
+            "MetricValue": "88.599998",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:07:55.704Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:07:55.704Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:07:53.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:07:52.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:07:52.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:07:52.047Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:07:52.047Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:07:51.777Z",
+            "MetricValue": "83.199997",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:07:51.777Z",
+            "MetricValue": "88.699997",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:07:51.573Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:07:50.704Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:07:50.704Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:07:48.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:07:47.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:07:47.481Z",
+            "MetricValue": "434",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:07:47.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:07:47.047Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:07:47.047Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:07:46.777Z",
+            "MetricValue": "83.199997",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:07:46.777Z",
+            "MetricValue": "88.699997",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:07:46.573Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:07:45.704Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:07:45.704Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:07:43.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:07:42.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:07:42.761Z",
+            "MetricValue": "83.300003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:07:42.481Z",
+            "MetricValue": "434",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:07:42.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:07:42.047Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:07:42.047Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:07:42.047Z",
+            "MetricValue": "88.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:07:41.573Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:07:40.704Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:07:40.704Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:07:38.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:07:37.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:07:37.761Z",
+            "MetricValue": "83.300003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:07:37.699Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:07:37.699Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:07:37.481Z",
+            "MetricValue": "434",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:07:37.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:07:37.294Z",
+            "MetricValue": "88.699997",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:07:36.573Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:07:35.704Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:07:35.704Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:07:33.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirFlowEfficiency",
+            "Timestamp": "2025-02-01T20:07:32.995Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirFlowEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerSysInputPower",
+            "Timestamp": "2025-02-01T20:07:32.761Z",
+            "MetricValue": "83.300003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerSysInputPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PowerToCoolRatio",
+            "Timestamp": "2025-02-01T20:07:32.699Z",
+            "MetricValue": "3.5",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PowerToCoolRatio",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowPerFanPower",
+            "Timestamp": "2025-02-01T20:07:32.699Z",
+            "MetricValue": "2.4",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowPerFanPower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:07:32.481Z",
+            "MetricValue": "434",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "PSUEfficiency",
+            "Timestamp": "2025-02-01T20:07:32.481Z",
+            "MetricValue": "93.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal PSUEfficiency",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:07:32.481Z",
+            "MetricValue": "88.800003",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysRackTempDelta",
+            "Timestamp": "2025-02-01T20:07:31.573Z",
+            "MetricValue": "22",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysRackTempDelta",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ITUE",
+            "Timestamp": "2025-02-01T20:07:30.704Z",
+            "MetricValue": "1.2",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ITUE",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysNetAirflow",
+            "Timestamp": "2025-02-01T20:07:30.704Z",
+            "MetricValue": "43",
+            "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Oem/Dell/DellSystem/System.Embedded.1#EstimatedSystemAirflowCFM",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysNetAirflow",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "ComputePower",
+            "Timestamp": "2025-02-01T20:07:29.151Z",
+            "MetricValue": "435",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal ComputePower",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "TotalPSUHeatDissipation",
+            "Timestamp": "2025-02-01T20:07:28.868Z",
+            "MetricValue": "32",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal TotalPSUHeatDissipation",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        },
+        {
+            "MetricId": "SysAirflowUtilization",
+            "Timestamp": "2025-02-01T20:07:28.037Z",
+            "MetricValue": "88.699997",
+            "MetricProperty": "",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "Thermal",
+                    "Label": "Thermal SysAirflowUtilization",
+                    "Source": "thermalmetrics",
+                    "FQDD": "Thermal"
+                }
+            }
+        }
+    ],
+    "MetricValues@odata.count": 130,
+    "Oem": {
+        "Dell": {
+            "@odata.type": "#DellMetricReport.v1_0_0.DellMetricReport",
+            "ServiceTag": "6VQS5X3",
+            "MetricReportDefinitionDigest": "c8f510aeeb6ee34aa53fd5a4736be988d7ac82e384ad67aebd795b808193e789",
+            "iDRACFirmwareVersion": "7.10.90.00"
+        }
+    }
+}

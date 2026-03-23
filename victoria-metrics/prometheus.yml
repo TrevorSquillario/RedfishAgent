@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+- job_name: vmagent
+  static_configs:
+  - targets:
+    - vmagent:8429
+- job_name: victoriametrics
+  static_configs:
+  - targets:
+    - victoriametrics:8428
+- job_name: 'redfish-discovery'
+  http_sd_configs:
+    - url: 'http://inventory:8080/api/v1/targets'

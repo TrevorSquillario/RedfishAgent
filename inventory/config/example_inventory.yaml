@@ -1,0 +1,18 @@
+# Example inventory formats supported by the service.
+
+# 1) Simple list of targets (strings)
+- "host1.example.com:9100"
+- "10.0.0.5:9182"
+
+# 2) Prometheus HTTP SD compatible objects (targets + labels)
+- targets:
+  - "host2.example.com:9100"
+  labels:
+    env: production
+    role: web
+
+# 3) Host/port pairs as dicts
+- host: host3.example.com
+  port: 9116
+  labels:
+    env: staging

@@ -1,0 +1,383 @@
+{
+    "@odata.type": "#MetricReport.v1_5_0.MetricReport",
+    "@odata.context": "/redfish/v1/$metadata#MetricReport.MetricReport",
+    "@odata.id": "/redfish/v1/TelemetryService/MetricReports/ThermalSensor",
+    "Id": "ThermalSensor",
+    "Name": "ThermalSensor Metric Report",
+    "ReportSequence": "1016",
+    "Timestamp": "2025-02-01T20:08:51.000Z",
+    "MetricReportDefinition": {
+        "@odata.id": "/redfish/v1/TelemetryService/MetricReportDefinitions/ThermalSensor"
+    },
+    "MetricValues": [
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:51.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:49.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:46.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:44.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:41.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:39.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:36.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:34.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:31.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:29.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:26.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:24.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:21.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:19.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:16.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:14.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:11.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:09.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:06.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:04.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:08:01.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:07:57.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:07:56.000Z",
+            "MetricValue": "42",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardExhaustTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Exhaust Temp",
+                    "Label": "System Board Exhaust Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardExhaustTemp"
+                }
+            }
+        },
+        {
+            "MetricId": "TemperatureReading",
+            "Timestamp": "2025-02-01T20:07:52.000Z",
+            "MetricValue": "20",
+            "MetricProperty": "/redfish/v1/Dell/Systems/System.Embedded.1/DellNumericSensor/iDRAC.Embedded.1_0x23_SystemBoardInletTemp#CurrentReading",
+            "Oem": {
+                "Dell": {
+                    "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+                    "ContextID": "System Board Inlet Temp",
+                    "Label": "System Board Inlet Temp TemperatureReading",
+                    "Source": "rawsensor",
+                    "FQDD": "iDRAC.Embedded.1#SystemBoardInletTemp"
+                }
+            }
+        }
+    ],
+    "MetricValues@odata.count": 24,
+    "Oem": {
+        "Dell": {
+            "@odata.type": "#DellMetricReport.v1_0_0.DellMetricReport",
+            "ServiceTag": "6VQS5X3",
+            "MetricReportDefinitionDigest": "0aa43bc2de9f69861a5c902805132759abec59a41b2f65687fabe311b6d1f1ed",
+            "iDRACFirmwareVersion": "7.10.90.00"
+        }
+    }
+}
