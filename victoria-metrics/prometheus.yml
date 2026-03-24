@@ -12,4 +12,4 @@ scrape_configs:
     - victoriametrics:8428
 - job_name: 'redfish-discovery'
   http_sd_configs:
-    - url: 'http://inventory:8080/api/v1/targets'
+    - url: 'http://agentredfish:8000/api/inventory/targets'

@@ -5,7 +5,7 @@ import logging
 from utils.logging import setup_logger
 
 from base.inventory_plugin_base import InventoryPluginInterface
-from models.plugin import InventoryEntry
+from models.plugins import InventoryEntry
 
 logger = setup_logger(__name__)
 

@@ -1,6 +1,6 @@
 
 from fastapi import APIRouter, Request, Depends, HTTPException
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from utils.logging import setup_logger
 from app import AgentFishApp
@@ -24,7 +24,7 @@ def get_app(request: Request) -> AgentFishApp:
 
 
 @router.get("/targets")
-def get_targets(agentredfish: AgentFishApp = Depends(get_app)) -> Dict[str, Any]:
+def get_targets(agentredfish: AgentFishApp = Depends(get_app)) -> List[Dict[str, Any]]:
 	"""Run inventory plugins and return their results.
 
 	Prefer the already-initialized `AgentFishApp.inventory_loader`. If that
@@ -35,8 +35,10 @@ def get_targets(agentredfish: AgentFishApp = Depends(get_app)) -> Dict[str, Any]
 
 		# Use pre-loaded inventory loader when available
 		loader = getattr(agentredfish, "inventory_loader", None)
-		if loader is not None:
-			return loader.run_inventory()
+		if loader is None:
+			return []
+
+		return loader.run_inventory() or []
 
 	except Exception as e:
 		handle_api_exception(e)

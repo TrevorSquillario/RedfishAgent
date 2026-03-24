@@ -5,12 +5,12 @@ package and invokes the `run_inventory` method on the project's
 `PluginLoader`.
 """)
 
-from typing import Any, Dict, Optional
-import logging
+from typing import Any, Dict, Optional, List
+from utils.logging import setup_logger
 
 from .plugin_loader import PluginLoader
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 
 class InventoryService:
@@ -26,7 +26,7 @@ class InventoryService:
 		self.context = context or {}
 		self.loader = PluginLoader(self.plugin_package)
 
-	def run_inventory(self) -> Dict[str, Any]:
+	def run_inventory(self) -> List[Dict[str, Any]]:
 		"""Discover, load and run all inventory plugins.
 
 		Returns:
@@ -37,7 +37,7 @@ class InventoryService:
 			logger.info("InventoryService: loading plugins from %s", self.plugin_package)
 			self.loader.load_plugins(self.context)
 			logger.info("InventoryService: running inventory plugins")
-			return self.loader.run_inventory()
+			return self.run_inventory()
 		except Exception as exc:  # pragma: no cover - defensive fallback
 			logger.exception("InventoryService failed: %s", exc)
 			return {"error": str(exc)}

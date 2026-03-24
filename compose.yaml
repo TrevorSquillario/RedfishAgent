@@ -20,14 +20,15 @@ services:
     image: agentredfish/inventory:latest
     container_name: agentredfish
     ports:
-      - "8081:8080"
+      - "8081:8000"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "python -c 'import urllib.request,sys; urllib.request.urlopen(\"http://127.0.0.1:8080/healthz\")'"]
+      test: ["CMD-SHELL", "python -c 'import urllib.request,sys; urllib.request.urlopen(\"http://127.0.0.1:8000/healthz\")'"]
       interval: 10s
       timeout: 3s
       retries: 5
     volumes:
+      - ./agentredfish/config/config.yaml:/config/config.yaml:ro
       - ./inventory.yaml:/config/inventory.yaml:ro
     environment:
       - LOG_LEVEL=DEBUG
@@ -120,7 +121,7 @@ services:
       retries: 3
       start_period: 15s
     depends_on:
-      inventory:
+      agentredfish:
         condition: service_healthy
 
   #  Metrics collector.
