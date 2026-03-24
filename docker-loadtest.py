@@ -7,6 +7,7 @@ parser.add_argument('-c','--count', help='Container Count', required=False, type
 parser.add_argument('-s','--start', help='Start', required=False, action='store_true')
 parser.add_argument('-k','--kill', help='Kill', required=False, action='store_true')
 parser.add_argument('-v','--volume', help='Volume mapping host:container', required=False, default='/home/trevor/redfish-mockups/ssl:/certs')
+parser.add_argument('-r','--redfish', help='Redfish mapping host:container (mounted at /redfish)', required=False, default='/home/trevor/redfish-mockups/R7615_iDRAC_7.20.80.50/redfish:/redfish')
 parser.add_argument('-n','--network', help='Docker network to attach containers to', required=False, default='agentfish_agentfish')
 parser.add_argument('-b','--build', help='Force building the image before starting', required=False, action='store_true')
 parser.add_argument('-l','--listener', help='Listener URL to set as LISTENER_DEST in containers', required=False, default='http://redfish-listener:8080/redfish/events')
@@ -92,6 +93,22 @@ if args.start:
             "network": network,
             "detach": True,
         }
+        # Inject redfish mount if requested
+        if args.redfish:
+            # parse host:container[:mode]
+            rparts = args.redfish.split(':')
+            if len(rparts) >= 2:
+                rhost = rparts[0]
+                rcontainer = rparts[1]
+                rmode = rparts[2] if len(rparts) >= 3 else 'ro'
+            else:
+                # fallback to mapping host -> /redfish
+                rhost = args.redfish
+                rcontainer = '/redfish'
+                rmode = 'ro'
+            if vols is None:
+                vols = {}
+            vols[rhost] = {'bind': rcontainer, 'mode': rmode}
         # inject listener env into the container so test server forwards to the listener
         run_kwargs["environment"] = {"LISTENER_DEST": args.listener}
         if vols:

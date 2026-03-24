@@ -2,7 +2,7 @@
 from starlette.responses import StreamingResponse
 from sse_starlette.sse import EventSourceResponse
 import asyncio
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 import json
@@ -11,7 +11,6 @@ import os
 import logging
 import random
 from datetime import datetime, timezone
-from fastapi import Request
 import httpx
 import uuid
 
@@ -85,41 +84,6 @@ async def idrac_generator(event_type):
             yield json.dumps(idrac_sse_example_json) + '\n'
         await asyncio.sleep(random.randint(1,10))
 
-@app.get('/redfish/v1/Managers/iDRAC.Embedded.1')
-def managers():
-    idrac_json = """
-    {
-        "@odata.context":"/redfish/v1/$metadata#Manager.Manager",
-        "@odata.id":"/redfish/v1/Managers/iDRAC.Embedded.1",
-        "@odata.type":"#Manager.v1_19_1.Manager"
-    }
-    """
-    idrac_json = json.loads(idrac_json)
-    return JSONResponse(content=idrac_json)
-
-@app.get('/redfish/v1/Systems/System.Embedded.1')
-def systems_embedded(request: Request):
-    select = request.query_params.get('$select', None)
-    idrac_json = ""
-    hostname = os.environ.get('HOSTNAME')
-    if select:
-        idrac_json = """
-        {
-        "@odata.context": "/redfish/v1/$metadata#ComputerSystem.ComputerSystem",
-        "@odata.id": "/redfish/v1/Systems/System.Embedded.1",
-        "@odata.type": "#ComputerSystem.v1_22_1.ComputerSystem",
-        "HostName": "hostname"
-        }
-        """
-    idrac_json = json.loads(idrac_json)
-    idrac_json["HostName"] = hostname
-    return JSONResponse(content=idrac_json)
-
-@app.get('/redfish/v1/Managers/iDRAC.Embedded.1/Attributes')
-def attributes():
-    idrac_json = get_file_to_json("example_attributes.json")
-    return JSONResponse(content=idrac_json)
-
 @app.get('/redfish/v1/SSE')
 def sse(request: Request):
     filter = request.query_params.get('$filter', None)
@@ -130,6 +94,52 @@ def sse(request: Request):
         event = idrac_generator(event_type)
         logger.info(event)
     return EventSourceResponse(event)
+
+
+@app.api_route('/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/Sel/Entries', methods=["GET", "HEAD"])
+def sel_entries_index(request: Request):
+    """Load the local index.json for SEL entries, update the Created date to today (keep time/tz), and return it."""
+    local_index = os.path.join('/redfish', 'v1', 'Managers', 'iDRAC.Embedded.1', 'LogServices', 'Sel', 'Entries', 'index.json')
+    logger.debug("SEL entries request -> local file %s", local_index)
+
+    if not os.path.exists(local_index) or not os.path.isfile(local_index):
+        logger.info("SEL index.json not found: %s", local_index)
+        return JSONResponse(status_code=404, content={"error": "index.json not found"})
+
+    # If this is a HEAD request, return headers-only response
+    if request.method == 'HEAD':
+        return Response(status_code=200)
+
+    try:
+        with open(local_index, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        today = datetime.now().strftime('%Y-%m-%d')
+
+        members = data.get('Members', [])
+        for m in members:
+            created = m.get('Created')
+            if created and isinstance(created, str) and len(created) > 10:
+                # replace the date portion (first 10 chars) with today's date, keep time and timezone
+                new_created = today + created[10:]
+                logger.debug("Updating member %s Created: %s -> %s", m.get('Id', '<no id>'), created, new_created)
+                m['Created'] = new_created
+
+        # update Members@odata.count if present
+        if 'Members@odata.count' in data:
+            try:
+                data['Members@odata.count'] = len(members)
+            except Exception:
+                pass
+
+        logger.info("Serving modified SEL entries index.json (%d members)", len(members))
+        return JSONResponse(content=data)
+    except json.JSONDecodeError as e:
+        logger.error("Invalid JSON in SEL index file %s: %s", local_index, e)
+        return JSONResponse(status_code=500, content={"error": "invalid json in index.json"})
+    except Exception as e:
+        logger.exception("Error loading SEL index file %s", local_index)
+        return JSONResponse(status_code=500, content={"error": "failed to load index.json"})
 
 
 # Subscription endpoints to support clients creating/deleting subscriptions
@@ -155,6 +165,49 @@ async def delete_subscription(sub_id: str):
         return JSONResponse(status_code=204, content=None)
     return JSONResponse(status_code=404, content={"error": "subscription not found"})
 
+# Dynamic endpoint: map incoming /redfish/... URI to a local index.json file under /app
+@app.get('/redfish/{full_path:path}')
+def redfish_dynamic(full_path: str):
+    """Return an index.json file from the local filesystem that mirrors the requested URI.
+
+    Example: request `/redfish/v1/Managers/iDRAC.Embedded.1` will try to return
+    `/redfish/v1/Managers/iDRAC.Embedded.1/index.json` if present.
+    """
+    # build local file path (files are copied into /app in the container)
+    local_index = os.path.join('/redfish', full_path, 'index.json')
+    logger.debug("Dynamic redfish request for %s -> local file %s", full_path, local_index)
+
+    if not os.path.exists(local_index):
+        logger.info("Index file not found: %s", local_index)
+        return JSONResponse(status_code=404, content={"error": "index.json not found"})
+
+    if not os.path.isfile(local_index):
+        logger.warning("Index path exists but is not a file: %s", local_index)
+        return JSONResponse(status_code=404, content={"error": "index.json not found"})
+
+    try:
+        # inspect file size and a small preview to aid debugging malformed/empty files
+        size = os.path.getsize(local_index)
+        logger.debug("Index file size=%d bytes: %s", size, local_index)
+        with open(local_index, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        preview = repr(content[:200])
+        logger.debug("Index file preview: %s", preview)
+
+        if not content.strip():
+            logger.error("Index file is empty: %s", local_index)
+            return JSONResponse(status_code=500, content={"error": "index.json empty"})
+
+        data = json.loads(content)
+        logger.info("Serving index file for %s", full_path)
+        return JSONResponse(content=data)
+    except json.JSONDecodeError as e:
+        logger.error("JSON decode error for file %s: %s (preview=%s)", local_index, e, preview)
+        return JSONResponse(status_code=500, content={"error": "invalid json in index.json"})
+    except Exception as e:
+        logger.exception("Failed to read/parse index file %s", local_index)
+        return JSONResponse(status_code=500, content={"error": "failed to read index.json"})
 
 # Background task: send events produced by idrac_generator to listener URL
 @app.on_event("startup")

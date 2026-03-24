@@ -83,18 +83,18 @@ default_target: "192.168.1.1"
 metrics:
   all: false         # CONFIG_METRICS_ALL=false
   processors: true  # CONFIG_METRICS_PROCESSORS=false
-  system: false      # CONFIG_METRICS_SYSTEM=false
+  system: true      # CONFIG_METRICS_SYSTEM=false
   sensors: false     # CONFIG_METRICS_SENSORS=false
   power: false       # CONFIG_METRICS_POWER=false
-  events: false      # CONFIG_METRICS_EVENTS=false
+  events: true      # CONFIG_METRICS_EVENTS=false
   storage: false     # CONFIG_METRICS_STORAGE=false
   memory: false      # CONFIG_METRICS_MEMORY=false
   network: false     # CONFIG_METRICS_NETWORK=false
-  extra: false       # CONFIG_METRICS_EXTRA=false
+  extra: true       # CONFIG_METRICS_EXTRA=false
 
 # The events section is used for filtering events when the "events" metrics group
 # is enabled. Events can be filtered based on minimum severity and maximum age.
 # Severity must be one of "ok", "warning", "critical"
 events:
   severity: warning  # CONFIG_EVENTS_SEVERITY=warning
-  maxage: 7d         # CONFIG_EVENTS_MAXAGE=7d
+  maxage: 180d         # CONFIG_EVENTS_MAXAGE=7d

@@ -11,12 +11,48 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - agentfish
+      - agentredfish
+
+  agentredfish:
+    build:
+      context: .
+      dockerfile: agentredfish/Dockerfile
+    image: agentredfish/inventory:latest
+    container_name: agentredfish
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request,sys; urllib.request.urlopen(\"http://127.0.0.1:8080/healthz\")'"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - ./inventory.yaml:/config/inventory.yaml:ro
+    environment:
+      - LOG_LEVEL=DEBUG
+    networks:
+      - agentredfish
+
+  db:
+    image: pgvector/pgvector:pg17 # PostgreSQL with pgvector support
+    container_name: pgvector-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: example_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ~/app/pgvector:/var/lib/postgresql/data
+      #- ./postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
 
   redfish-listener:
+    profiles:
+      - redfish-listener
     build:
       context: ./redfish-listener-go
-    image: agentfish/redfish-listener:latest
+    image: agentredfish/redfish-listener:latest
     container_name: redfish-listener
     ports:
       #- "8443:8443"
@@ -36,10 +72,11 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - agentfish
+      - agentredfish
 
-  idrac_exporter:
+  idrac-exporter:
     image: ghcr.io/mrlhansen/idrac_exporter:latest
+    container_name: idrac-exporter
     restart: unless-stopped
     environment:
       CONFIG_DEFAULT_USERNAME: user
@@ -49,8 +86,10 @@ services:
       CONFIG_DEFAULT_USE_BASIC_AUTH: true
     volumes:
       - ./idrac-exporter/config.yaml:/etc/prometheus/idrac.yml:ro
+    ports:
+      - "9348:9348"
     networks:
-      - agentfish
+      - agentredfish
 
   # VictoriaMetrics instance, a single process responsible for
   # storing metrics and serve read requests.
@@ -73,7 +112,7 @@ services:
       - "--influxListenAddr=:8089"
     restart: always
     networks:
-      - agentfish
+      - agentredfish
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8428/-/healthy"]
       interval: 30s
@@ -99,29 +138,70 @@ services:
       - "--remoteWrite.url=http://victoriametrics:8428/api/v1/write"
     restart: always
     networks:
-      - agentfish
+      - agentredfish
     depends_on:
-      victoriametrics:
-        condition: service_healthy
+      - "victoriametrics"
 
-  inventory:
-    build:
-      context: ./inventory
-    image: agentfish/inventory:latest
-    container_name: inventory
+  # vmalert executes alerting and recording rules
+  vmalert:
+    image: victoriametrics/vmalert:v1.138.0
+    depends_on:
+      - "victoriametrics"
+      - "alertmanager"
     ports:
-      - "8081:8080"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "python -c 'import urllib.request,sys; urllib.request.urlopen(\"http://127.0.0.1:8080/healthz\")'"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
+      - 8880:8880
     volumes:
-      - ./inventory.yaml:/config/inventory.yaml:ro
+      - ./victoria-metrics/rules/alerts.yml:/etc/alerts/alerts.yml
+      - ./victoria-metrics/rules/alerts-health.yml:/etc/alerts/alerts-health.yml
+      - ./victoria-metrics/rules/alerts-vmagent.yml:/etc/alerts/alerts-vmagent.yml
+      - ./victoria-metrics/rules/alerts-vmalert.yml:/etc/alerts/alerts-vmalert.yml
+    command:
+      - "--datasource.url=http://victoriametrics:8428/"
+      - "--remoteRead.url=http://victoriametrics:8428/"
+      - "--remoteWrite.url=http://vmagent:8429/"
+      - "--notifier.url=http://alertmanager:9093/"
+      - "--rule=/etc/alerts/*.yml"
+      # display source of alerts in grafana
+      - "--external.url=http://127.0.0.1:3000" #grafana outside container
+      - '--external.alert.source=explore?orgId=1&left={"datasource":"VictoriaMetrics","queries":[{"expr":{{.Expr|jsonEscape|queryEscape}},"refId":"A"}],"range":{"from":"{{ .ActiveAt.UnixMilli }}","to":"now"}}'
+    restart: always
     networks:
-      - agentfish
+      - agentredfish
+
+  # alertmanager receives alerting notifications from vmalert
+  # and distributes them according to --config.file.
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    volumes:
+      - ./victoria-metrics/alertmanager.yml:/config/alertmanager.yml
+    command:
+      - "--config.file=/config/alertmanager.yml"
+    ports:
+      - 9093:9093
+    restart: always
+    networks:
+      - agentredfish
+
+  grafana:
+    image: grafana/grafana:12.2.0
+    depends_on:
+      - "victoriametrics"
+    ports:
+      - 3000:3000
+    restart: always
+    environment:
+      - GF_PLUGINS_PREINSTALL=yesoreyeram-infinity-datasource
+    volumes:
+      #- grafanadata:/var/lib/grafana
+      - ./grafana/provisioning/datasources/prometheus/single.yml:/etc/grafana/provisioning/datasources/single.yml
+      - ./grafana/provisioning/datasources/infinity/single.yml:/etc/grafana/provisioning/datasources/infinity-single.yml
+      - ./grafana/provisioning/dashboards_config:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/dashboards/victoriametrics.json:/var/lib/grafana/dashboards/vm.json
+      - ./grafana/provisioning/dashboards/vmagent.json:/var/lib/grafana/dashboards/vmagent.json
+      - ./grafana/provisioning/dashboards/vmalert.json:/var/lib/grafana/dashboards/vmalert.json
+      - ./grafana/provisioning/dashboards/alert-statistics.json:/var/lib/grafana/dashboards/alert-statistics.json
+      - ./grafana/provisioning/dashboards/metrics-explorer.json:/var/lib/grafana/dashboards/metrics-explorer.json
 
 networks:
-  agentfish:
+  agentredfish:
     driver: bridge
