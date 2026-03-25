@@ -9,3 +9,4 @@ apscheduler
 psycopg2-binary
 redis>=4.6.0
 hiredis>=2.0.0
+openai>=1.0.0

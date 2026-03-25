@@ -10,6 +10,7 @@ from services.plugin_loader import PluginLoader
 from services.redis import RedisService
 from services.webhook import WebhookService
 from services.llm import LLMService
+from services.database import init_database
 import os
 
 class AgentFishApp:
@@ -106,17 +107,25 @@ class AgentFishApp:
                 import threading
 
                 listener = threading.Thread(
-                    target=self.llm_service.subscribeToAlerts,
+                    target=self.llm_service.subscribe_to_alerts,
                     kwargs={"start_id": "$"},
                     daemon=True,
                 )
                 listener.start()
-                self.logger.info("LLMService subscribeToAlerts started in background")
+                self.logger.info("LLMService subscribe_to_alerts started in background")
             except Exception:
                 self.logger.exception("Failed to start LLMService listener thread")
         except Exception as e:
             self.logger.warning(f"Could not initialize LLMService: {e}")
             self.llm_service = None
+
+        # Initialize DatabaseManager (services/database.py)
+        try:
+            self.db_manager = init_database()
+            self.logger.info("DatabaseManager initialized")
+        except Exception as e:
+            self.logger.warning(f"Could not initialize DatabaseManager: {e}")
+            self.db_manager = None
 
         self._initialized = True
 

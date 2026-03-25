@@ -37,16 +37,24 @@ services:
       - REDIS_PORT=6379
       - REDIS_DB=0
       #- REDIS_PASSWORD=
+      - POSTGRES_DB=agentredfish_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_HOST=pgvector
+      - POSTGRES_PORT=5432
+      - OPENAI_API_BASE=http://127.0.0.1:8000
+      - OPENAI_MODEL=text-embedding-3-small
+      - OPENAI_API_KEY=
     networks:
       - agentredfish
 
-  db:
+  pgvector:
     image: pgvector/pgvector:pg17 # PostgreSQL with pgvector support
-    container_name: pgvector-db
+    container_name: pgvector
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: example_db
+      POSTGRES_DB: agentredfish_db
     ports:
       - "5432:5432"
     volumes:
