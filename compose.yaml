@@ -3,6 +3,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    container_name: redis
     ports:
       - "6379:6379"
     healthcheck:
@@ -32,6 +33,10 @@ services:
       - ./inventory.yaml:/config/inventory.yaml:ro
     environment:
       - LOG_LEVEL=DEBUG
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      #- REDIS_PASSWORD=
     networks:
       - agentredfish
 
@@ -156,6 +161,7 @@ services:
       - ./victoria-metrics/rules/alerts-health.yml:/etc/alerts/alerts-health.yml
       - ./victoria-metrics/rules/alerts-vmagent.yml:/etc/alerts/alerts-vmagent.yml
       - ./victoria-metrics/rules/alerts-vmalert.yml:/etc/alerts/alerts-vmalert.yml
+      - ./victoria-metrics/rules/alerts-redfish-alerts.yml:/etc/alerts/alerts-redfish-alerts.yml
     command:
       - "--datasource.url=http://victoriametrics:8428/"
       - "--remoteRead.url=http://victoriametrics:8428/"
@@ -202,6 +208,67 @@ services:
       - ./grafana/provisioning/dashboards/vmalert.json:/var/lib/grafana/dashboards/vmalert.json
       - ./grafana/provisioning/dashboards/alert-statistics.json:/var/lib/grafana/dashboards/alert-statistics.json
       - ./grafana/provisioning/dashboards/metrics-explorer.json:/var/lib/grafana/dashboards/metrics-explorer.json
+
+  # Redfish mockup servers for different iDRAC versions
+  14g:
+    build:
+      context: .
+      dockerfile: redfish-mockup-server/Dockerfile
+    image: redfish-mockup-server:latest
+    container_name: redfish-mockup-14g
+    volumes:
+      - ~/redfish-mockups/R740xd_iDRAC_7.00.00.174/redfish:/redfish
+      - ~/redfish-mockups/ssl:/certs
+    healthcheck:
+      disable: true
+    restart: "no"
+    networks:
+      - agentredfish
+
+  15g:
+    build:
+      context: .
+      dockerfile: redfish-mockup-server/Dockerfile
+    image: redfish-mockup-server:latest
+    container_name: redfish-mockup-15g
+    volumes:
+      - ~/redfish-mockups/R750_iDRAC_7.20.60.50/redfish:/redfish
+      - ~/redfish-mockups/ssl:/certs
+    healthcheck:
+      disable: true
+    restart: "no"
+    networks:
+      - agentredfish
+
+  16g:
+    build:
+      context: .
+      dockerfile: redfish-mockup-server/Dockerfile
+    image: redfish-mockup-server:latest
+    container_name: redfish-mockup-16g
+    volumes:
+      - ~/redfish-mockups/R7615_iDRAC_7.20.80.50/redfish:/redfish
+      - ~/redfish-mockups/ssl:/certs
+    healthcheck:
+      disable: true
+    restart: "no"
+    networks:
+      - agentredfish
+
+  17g:
+    build:
+      context: .
+      dockerfile: redfish-mockup-server/Dockerfile
+    image: redfish-mockup-server:latest
+    container_name: redfish-mockup-17g
+    volumes:
+      - ~/redfish-mockups/R670_iDRAC_1.20.60.50/redfish:/redfish
+      - ~/redfish-mockups/ssl:/certs
+    healthcheck:
+      disable: true
+    restart: "no"
+    networks:
+      - agentredfish
 
 networks:
   agentredfish:

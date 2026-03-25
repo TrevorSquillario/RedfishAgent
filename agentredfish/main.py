@@ -14,6 +14,7 @@ from datetime import date, datetime
 
 from utils.api import handle_api_exception  
 from api.inventory_router import router as inventory_router
+from api.webhook_router import router as webhook_router
 
  # Initialize the app
 agentfish_app = AgentFishApp()
@@ -25,6 +26,7 @@ app = FastAPI(
 )
 
 app.include_router(inventory_router)
+app.include_router(webhook_router)
 
 # Add CORS middleware to allow cross-origin requests
 app.add_middleware(

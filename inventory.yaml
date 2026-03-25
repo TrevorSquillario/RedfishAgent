@@ -1,8 +1,8 @@
 - targets:
-  - "redfish-testserver-0"
-  - "redfish-testserver-1"
-  - "redfish-testserver-2"
-  - "redfish-testserver-3"
+  - "redfish-mockup-14g"
+  - "redfish-mockup-15g"
+  - "redfish-mockup-16g"
+  - "redfish-mockup-17g"
   labels:
     env: production
     role: web

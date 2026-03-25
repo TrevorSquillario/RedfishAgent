@@ -7,6 +7,10 @@ from pathlib import Path
 # local services
 from services.config import ConfigService
 from services.plugin_loader import PluginLoader
+from services.redis import RedisService
+from services.webhook import WebhookService
+from services.llm import LLMService
+import os
 
 class AgentFishApp:
     _instance = None
@@ -73,6 +77,46 @@ class AgentFishApp:
             self.inventory_loader.plugins = {k: v for k, v in self.inventory_loader.plugins.items() if k in inventory_spec}
         if output_spec:
             self.output_loader.plugins = {k: v for k, v in self.output_loader.plugins.items() if k in output_spec}
+
+        # Initialize RedisService and WebhookService
+        try:
+            redis_host = os.getenv("REDIS_HOST", "redis")
+            redis_port = int(os.getenv("REDIS_PORT", "6379"))
+            redis_db = int(os.getenv("REDIS_DB", "0"))
+            redis_password = os.getenv("REDIS_PASSWORD", None)
+
+            self.redis_service = RedisService(host=redis_host, port=redis_port, db=redis_db, password=redis_password)
+            self.logger.info("RedisService initialized (%s:%s db=%s)", redis_host, redis_port, redis_db)
+        except Exception as e:
+            self.logger.warning(f"Could not initialize RedisService: {e}")
+            self.redis_service = None
+
+        try:
+            self.webhook_service = WebhookService(self.redis_service)
+            self.logger.info("WebhookService initialized")
+        except Exception as e:
+            self.logger.warning(f"Could not initialize WebhookService: {e}")
+            self.webhook_service = None
+
+        # Initialize LLMService and start background listener for alerts
+        try:
+            self.llm_service = LLMService(self.redis_service)
+            self.logger.info("LLMService initialized")
+            try:
+                import threading
+
+                listener = threading.Thread(
+                    target=self.llm_service.subscribeToAlerts,
+                    kwargs={"start_id": "$"},
+                    daemon=True,
+                )
+                listener.start()
+                self.logger.info("LLMService subscribeToAlerts started in background")
+            except Exception:
+                self.logger.exception("Failed to start LLMService listener thread")
+        except Exception as e:
+            self.logger.warning(f"Could not initialize LLMService: {e}")
+            self.llm_service = None
 
         self._initialized = True
 

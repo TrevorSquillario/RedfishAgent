@@ -1,0 +1,13 @@
+groups:
+  - name: redfish.logs
+    rules:
+      - alert: RedfishCriticalLogEntry
+        expr: idrac_events_log_entry{severity="Critical"} > 0
+        for: 0m
+        labels:
+          severity: critical
+          alertsource: redfish
+        annotations:
+          summary: "Critical Redfish log entry on {{ $labels.id }}"
+          description: "{{ $labels.message }} (event id={{ $labels.id }})"
+

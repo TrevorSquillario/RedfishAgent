@@ -7,3 +7,5 @@ peewee>=3.17.0
 playhouse>=0.1.0
 apscheduler
 psycopg2-binary
+redis>=4.6.0
+hiredis>=2.0.0

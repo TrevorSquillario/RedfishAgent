@@ -1,0 +1,292 @@
+# HELP idrac_cpu_current_speed_mhz Current speed of the CPU in Mhz
+# TYPE idrac_cpu_current_speed_mhz gauge
+idrac_cpu_current_speed_mhz{id="CPU.Socket.0"} 2400
+idrac_cpu_current_speed_mhz{id="CPU.Socket.1"} 2400
+# HELP idrac_cpu_health Health status of the CPU
+# TYPE idrac_cpu_health gauge
+idrac_cpu_health{id="CPU.Socket.0",status="OK"} 0
+idrac_cpu_health{id="CPU.Socket.1",status="OK"} 0
+# HELP idrac_cpu_info Information about the CPU
+# TYPE idrac_cpu_info untyped
+idrac_cpu_info{arch="x86-64",id="CPU.Socket.0",manufacturer="Intel",model="Intel(R) Xeon(R) 6710E",socket="CPU.Socket.0"} 1
+idrac_cpu_info{arch="x86-64",id="CPU.Socket.1",manufacturer="Intel",model="Intel(R) Xeon(R) 6710E",socket="CPU.Socket.1"} 1
+# HELP idrac_cpu_max_speed_mhz Maximum speed of the CPU in Mhz
+# TYPE idrac_cpu_max_speed_mhz gauge
+idrac_cpu_max_speed_mhz{id="CPU.Socket.0"} 4300
+idrac_cpu_max_speed_mhz{id="CPU.Socket.1"} 4300
+# HELP idrac_cpu_total_cores Total number of CPU cores
+# TYPE idrac_cpu_total_cores gauge
+idrac_cpu_total_cores{id="CPU.Socket.0"} 64
+idrac_cpu_total_cores{id="CPU.Socket.1"} 64
+# HELP idrac_cpu_total_threads Total number of CPU threads
+# TYPE idrac_cpu_total_threads gauge
+idrac_cpu_total_threads{id="CPU.Socket.0"} 64
+idrac_cpu_total_threads{id="CPU.Socket.1"} 64
+# HELP idrac_cpu_voltage Current voltage of the CPU
+# TYPE idrac_cpu_voltage gauge
+idrac_cpu_voltage{id="CPU.Socket.0"} 1.8
+idrac_cpu_voltage{id="CPU.Socket.1"} 1.8
+# HELP idrac_dell_controller_battery_health Health status of storage controller battery
+# TYPE idrac_dell_controller_battery_health gauge
+idrac_dell_controller_battery_health{id="Energypack.Integrated.1:RAID.SL.1-1",name="Energy pack on RAID Controller in SL 1",status="OK",storage_id="RAID.SL.1-1"} 0
+# HELP idrac_events_log_entry Entry from the system event log
+# TYPE idrac_events_log_entry counter
+idrac_events_log_entry{id="103",message="Power supply redundancy is lost.",severity="Critical"} 1.77446687e+09
+idrac_events_log_entry{id="94",message="Power supply redundancy is lost.",severity="Critical"} 1.77448105e+09
+# HELP idrac_exporter_build_info Constant metric with build information for the exporter
+# TYPE idrac_exporter_build_info untyped
+idrac_exporter_build_info{goversion="go1.25.8",revision="e4655a908b4c403d3d3615f37e46343f235eb530",version="2.4.2"} 1
+# HELP idrac_exporter_scrape_errors_total Total number of errors encountered while scraping target
+# TYPE idrac_exporter_scrape_errors_total counter
+idrac_exporter_scrape_errors_total 0
+# HELP idrac_memory_module_capacity_bytes Capacity of memory modules in bytes
+# TYPE idrac_memory_module_capacity_bytes gauge
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.A1"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.A2"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.A3"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.A4"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.A5"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.A6"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.A7"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.A8"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.B1"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.B2"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.B3"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.B4"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.B5"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.B6"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.B7"} 3.4359738368e+10
+idrac_memory_module_capacity_bytes{id="DIMM.Socket.B8"} 3.4359738368e+10
+# HELP idrac_memory_module_health Health status for memory modules
+# TYPE idrac_memory_module_health gauge
+idrac_memory_module_health{id="DIMM.Socket.A1",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.A2",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.A3",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.A4",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.A5",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.A6",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.A7",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.A8",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.B1",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.B2",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.B3",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.B4",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.B5",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.B6",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.B7",status="OK"} 0
+idrac_memory_module_health{id="DIMM.Socket.B8",status="OK"} 0
+# HELP idrac_memory_module_info Information about memory modules
+# TYPE idrac_memory_module_info untyped
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.A1",manufacturer="Hynix Semiconductor",name="DIMM A1",rank="2",serial="386831E3",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.A2",manufacturer="Hynix Semiconductor",name="DIMM A2",rank="2",serial="386831FB",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.A3",manufacturer="Hynix Semiconductor",name="DIMM A3",rank="2",serial="3868384B",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.A4",manufacturer="Hynix Semiconductor",name="DIMM A4",rank="2",serial="386831EB",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.A5",manufacturer="Hynix Semiconductor",name="DIMM A5",rank="2",serial="386831DE",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.A6",manufacturer="Hynix Semiconductor",name="DIMM A6",rank="2",serial="38683F1E",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.A7",manufacturer="Hynix Semiconductor",name="DIMM A7",rank="2",serial="386831CF",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.A8",manufacturer="Hynix Semiconductor",name="DIMM A8",rank="2",serial="386831DD",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.B1",manufacturer="Hynix Semiconductor",name="DIMM B1",rank="2",serial="386831ED",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.B2",manufacturer="Hynix Semiconductor",name="DIMM B2",rank="2",serial="386831F1",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.B3",manufacturer="Hynix Semiconductor",name="DIMM B3",rank="2",serial="38683203",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.B4",manufacturer="Hynix Semiconductor",name="DIMM B4",rank="2",serial="386831B5",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.B5",manufacturer="Hynix Semiconductor",name="DIMM B5",rank="2",serial="386831CC",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.B6",manufacturer="Hynix Semiconductor",name="DIMM B6",rank="2",serial="38683208",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.B7",manufacturer="Hynix Semiconductor",name="DIMM B7",rank="2",serial="386831DC",type="DDR5"} 1
+idrac_memory_module_info{ecc="SingleBitECC",id="DIMM.Socket.B8",manufacturer="Hynix Semiconductor",name="DIMM B8",rank="2",serial="3868320F",type="DDR5"} 1
+# HELP idrac_memory_module_speed_mhz Speed of memory modules in Mhz
+# TYPE idrac_memory_module_speed_mhz gauge
+idrac_memory_module_speed_mhz{id="DIMM.Socket.A1"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.A2"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.A3"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.A4"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.A5"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.A6"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.A7"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.A8"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.B1"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.B2"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.B3"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.B4"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.B5"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.B6"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.B7"} 5600
+idrac_memory_module_speed_mhz{id="DIMM.Socket.B8"} 5600
+# HELP idrac_network_adapter_health Health status for network adapters
+# TYPE idrac_network_adapter_health gauge
+idrac_network_adapter_health{id="NIC.Slot.2",status="OK"} 0
+idrac_network_adapter_health{id="NIC.Slot.5",status="OK"} 0
+# HELP idrac_network_adapter_info Information about network adapters
+# TYPE idrac_network_adapter_info untyped
+idrac_network_adapter_info{id="NIC.Slot.2",manufacturer="Intel(R) Corporation",model="Intel(R) Eth Ntwk Adptr OCP3.0 E610-XT4",serial="203A430968C0"} 1
+idrac_network_adapter_info{id="NIC.Slot.5",manufacturer="DELL",model="BRCM 4P 25G SFP 57504S OCP NIC",serial="VNFCBBA49R02HC"} 1
+# HELP idrac_network_port_current_speed_mbps Current link speed of network ports in Mbps
+# TYPE idrac_network_port_current_speed_mbps gauge
+idrac_network_port_current_speed_mbps{adapter_id="NIC.Slot.2",id="NIC.Slot.2-1"} 10000
+idrac_network_port_current_speed_mbps{adapter_id="NIC.Slot.2",id="NIC.Slot.2-2"} 0
+idrac_network_port_current_speed_mbps{adapter_id="NIC.Slot.2",id="NIC.Slot.2-3"} 0
+idrac_network_port_current_speed_mbps{adapter_id="NIC.Slot.2",id="NIC.Slot.2-4"} 0
+idrac_network_port_current_speed_mbps{adapter_id="NIC.Slot.5",id="NIC.Slot.5-1"} 0
+idrac_network_port_current_speed_mbps{adapter_id="NIC.Slot.5",id="NIC.Slot.5-2"} 0
+idrac_network_port_current_speed_mbps{adapter_id="NIC.Slot.5",id="NIC.Slot.5-3"} 0
+idrac_network_port_current_speed_mbps{adapter_id="NIC.Slot.5",id="NIC.Slot.5-4"} 0
+# HELP idrac_network_port_health Health status for network ports
+# TYPE idrac_network_port_health gauge
+idrac_network_port_health{adapter_id="NIC.Slot.2",id="NIC.Slot.2-1",status="OK"} 0
+idrac_network_port_health{adapter_id="NIC.Slot.2",id="NIC.Slot.2-2",status="OK"} 0
+idrac_network_port_health{adapter_id="NIC.Slot.2",id="NIC.Slot.2-3",status="OK"} 0
+idrac_network_port_health{adapter_id="NIC.Slot.2",id="NIC.Slot.2-4",status="OK"} 0
+idrac_network_port_health{adapter_id="NIC.Slot.5",id="NIC.Slot.5-1",status="OK"} 0
+idrac_network_port_health{adapter_id="NIC.Slot.5",id="NIC.Slot.5-2",status="OK"} 0
+idrac_network_port_health{adapter_id="NIC.Slot.5",id="NIC.Slot.5-3",status="OK"} 0
+idrac_network_port_health{adapter_id="NIC.Slot.5",id="NIC.Slot.5-4",status="OK"} 0
+# HELP idrac_network_port_link_up Link status of network ports (up or down)
+# TYPE idrac_network_port_link_up gauge
+idrac_network_port_link_up{adapter_id="NIC.Slot.2",id="NIC.Slot.2-1",status="LinkUp"} 1
+idrac_network_port_link_up{adapter_id="NIC.Slot.2",id="NIC.Slot.2-2",status="LinkDown"} 0
+idrac_network_port_link_up{adapter_id="NIC.Slot.2",id="NIC.Slot.2-3",status="LinkDown"} 0
+idrac_network_port_link_up{adapter_id="NIC.Slot.2",id="NIC.Slot.2-4",status="LinkDown"} 0
+idrac_network_port_link_up{adapter_id="NIC.Slot.5",id="NIC.Slot.5-1",status="LinkDown"} 0
+idrac_network_port_link_up{adapter_id="NIC.Slot.5",id="NIC.Slot.5-2",status="LinkDown"} 0
+idrac_network_port_link_up{adapter_id="NIC.Slot.5",id="NIC.Slot.5-3",status="LinkDown"} 0
+idrac_network_port_link_up{adapter_id="NIC.Slot.5",id="NIC.Slot.5-4",status="LinkDown"} 0
+# HELP idrac_power_control_avg_consumed_watts Average consumption of power control system during the reported interval
+# TYPE idrac_power_control_avg_consumed_watts gauge
+idrac_power_control_avg_consumed_watts{id="0",name="System Power Control"} 398
+# HELP idrac_power_control_capacity_watts Capacity of power control system in watts
+# TYPE idrac_power_control_capacity_watts gauge
+idrac_power_control_capacity_watts{id="0",name="System Power Control"} 0
+# HELP idrac_power_control_consumed_watts Consumption of power control system in watts
+# TYPE idrac_power_control_consumed_watts gauge
+idrac_power_control_consumed_watts{id="0",name="System Power Control"} 399
+# HELP idrac_power_control_interval_in_minutes Interval for measurements of power control system
+# TYPE idrac_power_control_interval_in_minutes gauge
+idrac_power_control_interval_in_minutes{id="0",name="System Power Control"} 1
+# HELP idrac_power_control_max_consumed_watts Maximum consumption of power control system during the reported interval
+# TYPE idrac_power_control_max_consumed_watts gauge
+idrac_power_control_max_consumed_watts{id="0",name="System Power Control"} 403
+# HELP idrac_power_control_min_consumed_watts Minimum consumption of power control system during the reported interval
+# TYPE idrac_power_control_min_consumed_watts gauge
+idrac_power_control_min_consumed_watts{id="0",name="System Power Control"} 397
+# HELP idrac_power_supply_capacity_watts Power supply capacity in watts
+# TYPE idrac_power_supply_capacity_watts gauge
+idrac_power_supply_capacity_watts{id="0"} 1500
+# HELP idrac_power_supply_efficiency_percent Power supply efficiency in percentage
+# TYPE idrac_power_supply_efficiency_percent gauge
+idrac_power_supply_efficiency_percent{id="0"} 92.000002
+# HELP idrac_power_supply_health Power supply health status
+# TYPE idrac_power_supply_health gauge
+idrac_power_supply_health{id="0",status="OK"} 0
+# HELP idrac_power_supply_input_watts Power supply input in watts
+# TYPE idrac_power_supply_input_watts gauge
+idrac_power_supply_input_watts{id="0"} 398.5
+# HELP idrac_power_supply_output_watts Power supply output in watts
+# TYPE idrac_power_supply_output_watts gauge
+idrac_power_supply_output_watts{id="0"} 372.5
+# HELP idrac_sensors_fan_health Health status for fans
+# TYPE idrac_sensors_fan_health gauge
+idrac_sensors_fan_health{id="0",name="Fan1A_1",status="OK"} 0
+idrac_sensors_fan_health{id="1",name="Fan1B_1",status="OK"} 0
+idrac_sensors_fan_health{id="10",name="Fan3A_2",status="OK"} 0
+idrac_sensors_fan_health{id="11",name="Fan3B_2",status="OK"} 0
+idrac_sensors_fan_health{id="12",name="Fan4A_1",status="OK"} 0
+idrac_sensors_fan_health{id="13",name="Fan4B_1",status="OK"} 0
+idrac_sensors_fan_health{id="14",name="Fan4A_2",status="OK"} 0
+idrac_sensors_fan_health{id="15",name="Fan4B_2",status="OK"} 0
+idrac_sensors_fan_health{id="2",name="Fan2A_1",status="OK"} 0
+idrac_sensors_fan_health{id="3",name="Fan2B_1",status="OK"} 0
+idrac_sensors_fan_health{id="4",name="Fan3A_1",status="OK"} 0
+idrac_sensors_fan_health{id="5",name="Fan3B_1",status="OK"} 0
+idrac_sensors_fan_health{id="6",name="Fan1A_2",status="OK"} 0
+idrac_sensors_fan_health{id="7",name="Fan1B_2",status="OK"} 0
+idrac_sensors_fan_health{id="8",name="Fan2A_2",status="OK"} 0
+idrac_sensors_fan_health{id="9",name="Fan2B_2",status="OK"} 0
+# HELP idrac_sensors_fan_speed Sensors reporting fan speed measurements
+# TYPE idrac_sensors_fan_speed gauge
+idrac_sensors_fan_speed{id="0",name="Fan1A_1",units="rpm"} 16560
+idrac_sensors_fan_speed{id="1",name="Fan1B_1",units="rpm"} 16590
+idrac_sensors_fan_speed{id="10",name="Fan3A_2",units="rpm"} 14280
+idrac_sensors_fan_speed{id="11",name="Fan3B_2",units="rpm"} 14400
+idrac_sensors_fan_speed{id="12",name="Fan4A_1",units="rpm"} 16770
+idrac_sensors_fan_speed{id="13",name="Fan4B_1",units="rpm"} 16890
+idrac_sensors_fan_speed{id="14",name="Fan4A_2",units="rpm"} 14550
+idrac_sensors_fan_speed{id="15",name="Fan4B_2",units="rpm"} 14490
+idrac_sensors_fan_speed{id="2",name="Fan2A_1",units="rpm"} 16950
+idrac_sensors_fan_speed{id="3",name="Fan2B_1",units="rpm"} 16830
+idrac_sensors_fan_speed{id="4",name="Fan3A_1",units="rpm"} 16950
+idrac_sensors_fan_speed{id="5",name="Fan3B_1",units="rpm"} 16710
+idrac_sensors_fan_speed{id="6",name="Fan1A_2",units="rpm"} 14190
+idrac_sensors_fan_speed{id="7",name="Fan1B_2",units="rpm"} 14400
+idrac_sensors_fan_speed{id="8",name="Fan2A_2",units="rpm"} 14580
+idrac_sensors_fan_speed{id="9",name="Fan2B_2",units="rpm"} 14310
+# HELP idrac_sensors_temperature Sensors reporting temperature measurements
+# TYPE idrac_sensors_temperature gauge
+idrac_sensors_temperature{id="0",name="CPU0 Temp",units="celsius"} 42.8
+idrac_sensors_temperature{id="1",name="CPU1 Temp",units="celsius"} 44.7
+idrac_sensors_temperature{id="2",name="System Board Inlet Temp",units="celsius"} 22
+idrac_sensors_temperature{id="3",name="System Board Exhaust Temp",units="celsius"} 32
+# HELP idrac_storage_controller_health Health status for storage controllers
+# TYPE idrac_storage_controller_health gauge
+idrac_storage_controller_health{id="RAID.SL.1-1",status="OK",storage_id="RAID.SL.1-1"} 0
+# HELP idrac_storage_controller_info Information about storage controllers
+# TYPE idrac_storage_controller_info untyped
+idrac_storage_controller_info{firmware="8.14.0.0.18-14",id="RAID.SL.1-1",manufacturer="DELL",model="PERC H965i Front",name="PERC H965i Front",storage_id="RAID.SL.1-1"} 1
+# HELP idrac_storage_controller_speed_mbps Speed of storage controllers in Mbps
+# TYPE idrac_storage_controller_speed_mbps gauge
+idrac_storage_controller_speed_mbps{id="RAID.SL.1-1",storage_id="RAID.SL.1-1"} 16000
+# HELP idrac_storage_drive_capacity_bytes Capacity of disk drives in bytes
+# TYPE idrac_storage_drive_capacity_bytes gauge
+idrac_storage_drive_capacity_bytes{id="Disk.Bay.0:Enclosure.Internal.0-1:RAID.SL.1-1",storage_id="RAID.SL.1-1"} 3.840103415808e+12
+# HELP idrac_storage_drive_health Health status for disk drives
+# TYPE idrac_storage_drive_health gauge
+idrac_storage_drive_health{id="Disk.Bay.0:Enclosure.Internal.0-1:RAID.SL.1-1",status="OK",storage_id="RAID.SL.1-1"} 0
+# HELP idrac_storage_drive_indicator_active State of the drive location indicator
+# TYPE idrac_storage_drive_indicator_active gauge
+idrac_storage_drive_indicator_active{id="Disk.Bay.0:Enclosure.Internal.0-1:RAID.SL.1-1",storage_id="RAID.SL.1-1"} 0
+# HELP idrac_storage_drive_info Information about disk drives
+# TYPE idrac_storage_drive_info untyped
+idrac_storage_drive_info{id="Disk.Bay.0:Enclosure.Internal.0-1:RAID.SL.1-1",manufacturer="SK hynix",mediatype="SSD",model="DELL NVME ISE PE8110 RI U.2 3.84TB",name="Solid State Disk 0:1:0",protocol="PCIe",serial="AND7N5670ICB4CJ0E",slot="0",storage_id="RAID.SL.1-1"} 1
+# HELP idrac_storage_drive_life_left_percent Predicted life left in percent
+# TYPE idrac_storage_drive_life_left_percent gauge
+idrac_storage_drive_life_left_percent{id="Disk.Bay.0:Enclosure.Internal.0-1:RAID.SL.1-1",storage_id="RAID.SL.1-1"} 100
+# HELP idrac_storage_health Health status for storage sub systems
+# TYPE idrac_storage_health gauge
+idrac_storage_health{id="RAID.SL.1-1",status="OK"} 0
+# HELP idrac_storage_info Information about storage sub systems
+# TYPE idrac_storage_info untyped
+idrac_storage_info{id="RAID.SL.1-1",name="PERC H965i Front"} 1
+# HELP idrac_storage_volume_capacity_bytes Capacity of virtual volumes in bytes
+# TYPE idrac_storage_volume_capacity_bytes gauge
+idrac_storage_volume_capacity_bytes{id="Disk.Virtual.1:RAID.SL.1-1",storage_id="RAID.SL.1-1"} 3.840103415808e+12
+# HELP idrac_storage_volume_health Health status for virtual volumes
+# TYPE idrac_storage_volume_health gauge
+idrac_storage_volume_health{id="Disk.Virtual.1:RAID.SL.1-1",status="OK",storage_id="RAID.SL.1-1"} 0
+# HELP idrac_storage_volume_info Information about virtual volumes
+# TYPE idrac_storage_volume_info untyped
+idrac_storage_volume_info{id="Disk.Virtual.1:RAID.SL.1-1",name="Virtual Disk 1",raidtype="RAID0",storage_id="RAID.SL.1-1",volumetype="NonRedundant"} 1
+# HELP idrac_storage_volume_media_span_count Number of media spanned by virtual volumes
+# TYPE idrac_storage_volume_media_span_count gauge
+idrac_storage_volume_media_span_count{id="Disk.Virtual.1:RAID.SL.1-1",storage_id="RAID.SL.1-1"} 1
+# HELP idrac_system_bios_info Information about the BIOS
+# TYPE idrac_system_bios_info untyped
+idrac_system_bios_info{version="1.7.5"} 1
+# HELP idrac_system_cpu_count Total number of CPUs in the system
+# TYPE idrac_system_cpu_count gauge
+idrac_system_cpu_count{model="Intel(R) Xeon(R) 6710E"} 2
+# HELP idrac_system_health Health status of the system
+# TYPE idrac_system_health gauge
+idrac_system_health{status="Critical"} 2
+# HELP idrac_system_indicator_active State of the system location indicator
+# TYPE idrac_system_indicator_active gauge
+idrac_system_indicator_active 0
+# HELP idrac_system_indicator_led_on Indicator LED state of the system
+# TYPE idrac_system_indicator_led_on gauge
+idrac_system_indicator_led_on{state="Lit"} 1
+# HELP idrac_system_machine_info Information about the machine
+# TYPE idrac_system_machine_info untyped
+idrac_system_machine_info{hostname="WIN-MVFNR9UR3DB",manufacturer="Dell Inc.",model="PowerEdge R670",serial="8VLHZ84",sku="8VLHZ84"} 1
+# HELP idrac_system_memory_size_bytes Total memory size of the system in bytes
+# TYPE idrac_system_memory_size_bytes gauge
+idrac_system_memory_size_bytes 5.49755813888e+11
+# HELP idrac_system_power_on Power state of the system
+# TYPE idrac_system_power_on gauge
+idrac_system_power_on 1

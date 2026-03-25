@@ -8,7 +8,7 @@ parser.add_argument('-s','--start', help='Start', required=False, action='store_
 parser.add_argument('-k','--kill', help='Kill', required=False, action='store_true')
 parser.add_argument('-v','--volume', help='Volume mapping host:container', required=False, default='/home/trevor/redfish-mockups/ssl:/certs')
 parser.add_argument('-r','--redfish', help='Redfish mapping host:container (mounted at /redfish)', required=False, default='/home/trevor/redfish-mockups/R7615_iDRAC_7.20.80.50/redfish:/redfish')
-parser.add_argument('-n','--network', help='Docker network to attach containers to', required=False, default='agentfish_agentfish')
+parser.add_argument('-n','--network', help='Docker network to attach containers to', required=False, default='agentredfish_agentredfish')
 parser.add_argument('-b','--build', help='Force building the image before starting', required=False, action='store_true')
 parser.add_argument('-l','--listener', help='Listener URL to set as LISTENER_DEST in containers', required=False, default='http://redfish-listener:8080/redfish/events')
 args = parser.parse_args()
@@ -17,7 +17,7 @@ client = docker.from_env()
 
 IMAGE_NAME = "redfish-testserver"
 CONTAINER_NAME_PREFIX = "redfish-testserver-"
-BUILD_CONTEXT = "./test-server"
+BUILD_CONTEXT = "./redfish-mockup-server"
 
 if args.start:
     # ghcr.io/trevorsquillario/idrac-sse:latest

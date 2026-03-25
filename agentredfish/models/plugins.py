@@ -8,6 +8,20 @@ class InventoryEntry(BaseModel):
 
 	- `targets`: list of target URLs/addresses (usually formatted by the YAML plugin)
 	- `labels`: optional map of label name -> value
+
+	Based on the Prometheus Service Discovery format
+	https://docs.victoriametrics.com/victoriametrics/sd_configs/#http_sd_configs
+
+	[
+		{
+			"targets": [ "<host>", ... ],
+			"labels": {
+			"<labelname>": "<labelvalue>",
+			...
+			}
+		},
+		...
+	]
 	"""
 
 	targets: List[str] = Field(..., min_items=1)

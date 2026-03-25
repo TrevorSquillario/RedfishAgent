@@ -1,0 +1,54 @@
+{
+  "receiver": "webhook-receiver",
+  "status": "firing",
+  "alerts": [
+        {
+      "status": "firing",
+      "labels": {
+        "alertgroup": "redfish.logs",
+        "alertname": "RedfishCriticalLogEntry",
+        "alertsource": "redfish",
+        "env": "production",
+        "exported_severity": "Critical",
+        "id": "72",
+        "instance": "redfish-mockup-15g",
+        "job": "redfish-discovery",
+        "message": "Power supply redundancy is lost.",
+        "role": "web",
+        "severity": "critical"
+      },
+      "annotations": {
+        "description": "Power supply redundancy is lost. (event id=72)",
+        "summary": "Critical Redfish log entry on 72"
+      },
+      "startsAt": "2026-03-24T18:09:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://127.0.0.1:3000/explore?orgId=1&left={\"datasource\":\"VictoriaMetrics\",\"queries\":[{\"expr\":%22idrac_events_log_entry%7Bseverity%3D%5C%22Critical%5C%22%7D+%3E+0%22,\"refId\":\"A\"}],\"range\":{\"from\":\"1774375740000\",\"to\":\"now\"}}",
+      "fingerprint": "b20e123df54d77e6"
+    },
+    {
+      "status": "firing",
+      "labels": {
+        "alertgroup": "redfish.logs",
+        "alertname": "RedfishCriticalLogEntry",
+        "alertsource": "redfish",
+        "env": "production",
+        "exported_severity": "Critical",
+        "id": "73",
+        "instance": "redfish-mockup-15g",
+        "job": "redfish-discovery",
+        "message": "The chassis is open while the power is off.",
+        "role": "web",
+        "severity": "critical"
+      },
+      "annotations": {
+        "description": "The chassis is open while the power is off. (event id=73)",
+        "summary": "Critical Redfish log entry on 73"
+      },
+      "startsAt": "2026-03-24T18:09:00Z",
+      "endsAt": "0001-01-01T00:00:00Z",
+      "generatorURL": "http://127.0.0.1:3000/explore?orgId=1&left={\"datasource\":\"VictoriaMetrics\",\"queries\":[{\"expr\":%22idrac_events_log_entry%7Bseverity%3D%5C%22Critical%5C%22%7D+%3E+0%22,\"refId\":\"A\"}],\"range\":{\"from\":\"1774375740000\",\"to\":\"now\"}}",
+      "fingerprint": "6e351b3e40e5c78d"
+    }
+    ]
+}

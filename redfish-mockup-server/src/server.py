@@ -15,7 +15,11 @@ import httpx
 import uuid
 
 logger = logging.getLogger('uvicorn')
-logger.setLevel(logging.DEBUG)
+log_level = os.getenv('LOG_LEVEL',  logging.ERROR)
+logger.setLevel(log_level)
+# Set uvicorn access/error logger levels to honor LOG_LEVEL (default WARNING)
+logging.getLogger("uvicorn.access").setLevel(os.getenv('LOG_LEVEL', log_level))
+logging.getLogger("uvicorn.error").setLevel(os.getenv('LOG_LEVEL', log_level))
 
 app = FastAPI()
 
@@ -71,6 +75,30 @@ def update_timestamp_on_metrics(event):
         metric["Timestamp"] = now
     return event
 
+
+def rewrite_ids_random(event):
+    """Rewrite common `Id` fields in the event to a random numeric string for testing."""
+    if not isinstance(event, dict):
+        return event
+
+    # Top-level Id
+    if 'Id' in event:
+        event['Id'] = str(random.randint(1, 99999))
+
+    # For Redfish log payloads that contain an "Events" list, rewrite inner Ids
+    if 'Events' in event and isinstance(event['Events'], list):
+        for e in event['Events']:
+            if isinstance(e, dict) and 'Id' in e:
+                e['Id'] = str(random.randint(1, 99999))
+
+    # For collection responses with Members, rewrite member Ids
+    if 'Members' in event and isinstance(event['Members'], list):
+        for m in event['Members']:
+            if isinstance(m, dict) and 'Id' in m:
+                m['Id'] = str(random.randint(1, 99999))
+
+    return event
+
 async def idrac_generator(event_type):
     for i in range(random.randint(1,1000)):
         files = get_files(event_type)
@@ -79,8 +107,10 @@ async def idrac_generator(event_type):
             idrac_sse_example_json = json.load(f)
             if event_type == "Event":
                 idrac_sse_example_json = update_timestamp_on_logs(idrac_sse_example_json)
+                idrac_sse_example_json = rewrite_ids_random(idrac_sse_example_json)
             else:
                 idrac_sse_example_json = update_timestamp_on_metrics(idrac_sse_example_json)
+                idrac_sse_example_json = rewrite_ids_random(idrac_sse_example_json)
             yield json.dumps(idrac_sse_example_json) + '\n'
         await asyncio.sleep(random.randint(1,10))
 
@@ -92,7 +122,7 @@ def sse(request: Request):
         event_type = filter.split(" ")[-1]
         logger.debug(f"Detected event type: {event_type}")
         event = idrac_generator(event_type)
-        logger.info(event)
+        logger.debug(event)
     return EventSourceResponse(event)
 
 
@@ -103,7 +133,7 @@ def sel_entries_index(request: Request):
     logger.debug("SEL entries request -> local file %s", local_index)
 
     if not os.path.exists(local_index) or not os.path.isfile(local_index):
-        logger.info("SEL index.json not found: %s", local_index)
+        logger.debug("SEL index.json not found: %s", local_index)
         return JSONResponse(status_code=404, content={"error": "index.json not found"})
 
     # If this is a HEAD request, return headers-only response
@@ -132,7 +162,9 @@ def sel_entries_index(request: Request):
             except Exception:
                 pass
 
-        logger.info("Serving modified SEL entries index.json (%d members)", len(members))
+        # Rewrite Id fields for testing before returning
+        data = rewrite_ids_random(data)
+        logger.debug("Serving modified SEL entries index.json (%d members)", len(members))
         return JSONResponse(content=data)
     except json.JSONDecodeError as e:
         logger.error("Invalid JSON in SEL index file %s: %s", local_index, e)
@@ -178,7 +210,7 @@ def redfish_dynamic(full_path: str):
     logger.debug("Dynamic redfish request for %s -> local file %s", full_path, local_index)
 
     if not os.path.exists(local_index):
-        logger.info("Index file not found: %s", local_index)
+        logger.debug("Index file not found: %s", local_index)
         return JSONResponse(status_code=404, content={"error": "index.json not found"})
 
     if not os.path.isfile(local_index):
@@ -200,7 +232,7 @@ def redfish_dynamic(full_path: str):
             return JSONResponse(status_code=500, content={"error": "index.json empty"})
 
         data = json.loads(content)
-        logger.info("Serving index file for %s", full_path)
+        logger.debug("Serving index file for %s", full_path)
         return JSONResponse(content=data)
     except json.JSONDecodeError as e:
         logger.error("JSON decode error for file %s: %s (preview=%s)", local_index, e, preview)
@@ -213,7 +245,7 @@ def redfish_dynamic(full_path: str):
 @app.on_event("startup")
 async def startup_event_sender():
     listener_url = os.environ.get('REDFISH_LISTENER_URL') or os.environ.get('LISTENER_DEST') or 'http://127.0.0.1:8080/redfish/events'
-    logger.info(f"Starting background event sender to {listener_url}")
+    logger.debug(f"Starting background event sender to {listener_url}")
     async def event_sender():
         async with httpx.AsyncClient() as client:
             async for item in idrac_generator('Event'):

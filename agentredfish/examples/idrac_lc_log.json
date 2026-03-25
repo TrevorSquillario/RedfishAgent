@@ -1,0 +1,19 @@
+{
+    "@odata.context": "/redfish/v1/$metadata#LogEntry.LogEntry",
+    "@odata.id": "/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/Sel/Entries/99",
+    "@odata.type": "#LogEntry.v1_18_0.LogEntry",
+    "Created": "2026-03-05T20:43:06-06:00",
+    "Description": "Log Entry 99",
+    "EntryCode": null,
+    "EntryType": "SEL",
+    "GeneratorId": "0x0037",
+    "Id": "99",
+    "Message": "OEM software event.",
+    "MessageArgs": [],
+    "MessageArgs@odata.count": 0,
+    "MessageId": "00000000",
+    "Name": "Log Entry 99",
+    "SensorNumber": 0,
+    "SensorType": "Fan",
+    "Severity": "OK"
+}

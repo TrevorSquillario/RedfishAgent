@@ -1,3 +1,6 @@
+# Based on the Prometheus Service Discovery format
+# https://docs.victoriametrics.com/victoriametrics/sd_configs/#http_sd_configs
+
 from typing import Any, Dict, List
 import os
 import yaml
