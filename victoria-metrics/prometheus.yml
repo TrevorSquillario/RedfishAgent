@@ -12,7 +12,7 @@ scrape_configs:
     - victoriametrics:8428
 - job_name: 'redfish-discovery'
   http_sd_configs:
-    - url: 'http://agentredfish:8000/api/inventory/targets'
+    - url: 'http://redfishagent:8000/api/inventory/targets'
 
   relabel_configs:
     # 1. Extract the 'target' value from the full URL string

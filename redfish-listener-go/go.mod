@@ -1,4 +1,4 @@
-module github.com/TrevorSquillario/agentredfish
+module github.com/TrevorSquillario/redfishagent
 
 go 1.22.2
 

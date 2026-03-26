@@ -20,7 +20,7 @@ from api.webhook_router import router as webhook_router
 agentfish_app = AgentFishApp()
 
 app = FastAPI(
-    title="AgentRedfish API",
+    title="RedfishAgent API",
     description="API for content generation",
     version="1.0.0"
 )

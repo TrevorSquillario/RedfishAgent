@@ -96,5 +96,5 @@ metrics:
 # is enabled. Events can be filtered based on minimum severity and maximum age.
 # Severity must be one of "ok", "warning", "critical"
 events:
-  severity: warning  # CONFIG_EVENTS_SEVERITY=warning
+  severity: critical  # CONFIG_EVENTS_SEVERITY=warning
   maxage: 180d         # CONFIG_EVENTS_MAXAGE=7d

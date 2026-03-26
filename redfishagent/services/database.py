@@ -11,7 +11,7 @@ from typing import Optional, List, Dict, Any, Union
 from pathlib import Path
 from services.migrations import get_migration_files
 from utils.logging import setup_logger
-from models.models import database_proxy, Post, PostSchedule, Tag, PostTag, PostFile
+from models.db import database_proxy, KB
 
 # Configure logging
 logger = setup_logger(__name__)
@@ -20,7 +20,7 @@ MIGRATIONS_VERSION_TABLE = 'migrations_version'
 
 class DatabaseManager:
     # Register models here so `create_tables` creates them on startup.
-    _tables = [Post, PostSchedule, Tag, PostTag, PostFile]
+    _tables = [KB]
 
     def __init__(self):
         self._initialize()
@@ -177,6 +177,28 @@ class DatabaseManager:
                 logger.info('Database connection closed')
         except Exception as e:
             logger.error(f'Error closing database: {e}')
+
+    def save_kb(self, file_name: str, file_modified: datetime, embedding: List[float]) -> KB:
+        """Save a KB record containing file metadata and embedding vector.
+
+        This will create a new `KB` row. The `embedding` parameter should be
+        a list/sequence of floats; when `pgvector` is installed the
+        `VectorField` will store it as a true pgvector value. If pgvector is
+        unavailable the field falls back to JSON and the list will be stored
+        as JSON.
+        """
+        try:
+            with self._db.atomic():
+                kb = KB.create(
+                    file_name=file_name,
+                    file_modified=file_modified,
+                    embedding=embedding,
+                )
+            logger.info(f"Saved KB record for {file_name} (id={kb.id})")
+            return kb
+        except Exception as e:
+            logger.error(f"Failed to save KB record for {file_name}: {e}")
+            raise
 
 
 # Module-level singleton and helpers

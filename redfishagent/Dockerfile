@@ -16,12 +16,12 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy Python requirements and install dependencies
-COPY agentredfish/requirements.txt .
+COPY redfishagent/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install uvicorn[standard] watchfiles
 
 # Copy the rest of the application
-COPY agentredfish/ .
+COPY redfishagent/ .
 
 # Set environment variables
 ENV PYTHONPATH=/app

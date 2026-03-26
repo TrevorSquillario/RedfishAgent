@@ -12,14 +12,14 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - agentredfish
+      - redfishagent
 
-  agentredfish:
+  redfishagent:
     build:
       context: .
-      dockerfile: agentredfish/Dockerfile
-    image: agentredfish/inventory:latest
-    container_name: agentredfish
+      dockerfile: redfishagent/Dockerfile
+    image: redfishagent:latest
+    container_name: redfishagent
     ports:
       - "8081:8000"
     restart: unless-stopped
@@ -29,7 +29,7 @@ services:
       timeout: 3s
       retries: 5
     volumes:
-      - ./agentredfish/config/config.yaml:/config/config.yaml:ro
+      - ./redfishagent/config/config.yaml:/config/config.yaml:ro
       - ./inventory.yaml:/config/inventory.yaml:ro
     environment:
       - LOG_LEVEL=DEBUG
@@ -46,7 +46,7 @@ services:
       - OPENAI_MODEL=text-embedding-3-small
       - OPENAI_API_KEY=
     networks:
-      - agentredfish
+      - redfishagent
 
   pgvector:
     image: pgvector/pgvector:pg17 # PostgreSQL with pgvector support
@@ -66,7 +66,7 @@ services:
       - redfish-listener
     build:
       context: ./redfish-listener-go
-    image: agentredfish/redfish-listener:latest
+    image: redfishagent/redfish-listener:latest
     container_name: redfish-listener
     ports:
       #- "8443:8443"
@@ -86,10 +86,11 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - agentredfish
+      - redfishagent
 
   idrac-exporter:
-    image: ghcr.io/mrlhansen/idrac_exporter:latest
+    #image: ghcr.io/mrlhansen/idrac_exporter:latest
+    image: idrac_exporter:latest
     container_name: idrac-exporter
     restart: unless-stopped
     environment:
@@ -103,7 +104,7 @@ services:
     ports:
       - "9348:9348"
     networks:
-      - agentredfish
+      - redfishagent
 
   # VictoriaMetrics instance, a single process responsible for
   # storing metrics and serve read requests.
@@ -126,7 +127,7 @@ services:
       - "--influxListenAddr=:8089"
     restart: always
     networks:
-      - agentredfish
+      - redfishagent
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8428/-/healthy"]
       interval: 30s
@@ -134,7 +135,7 @@ services:
       retries: 3
       start_period: 15s
     depends_on:
-      agentredfish:
+      redfishagent:
         condition: service_healthy
 
   #  Metrics collector.
@@ -152,7 +153,7 @@ services:
       - "--remoteWrite.url=http://victoriametrics:8428/api/v1/write"
     restart: always
     networks:
-      - agentredfish
+      - redfishagent
     depends_on:
       - "victoriametrics"
 
@@ -181,7 +182,7 @@ services:
       - '--external.alert.source=explore?orgId=1&left={"datasource":"VictoriaMetrics","queries":[{"expr":{{.Expr|jsonEscape|queryEscape}},"refId":"A"}],"range":{"from":"{{ .ActiveAt.UnixMilli }}","to":"now"}}'
     restart: always
     networks:
-      - agentredfish
+      - redfishagent
 
   # alertmanager receives alerting notifications from vmalert
   # and distributes them according to --config.file.
@@ -195,7 +196,7 @@ services:
       - 9093:9093
     restart: always
     networks:
-      - agentredfish
+      - redfishagent
 
   grafana:
     image: grafana/grafana:12.2.0
@@ -231,7 +232,7 @@ services:
       disable: true
     restart: "no"
     networks:
-      - agentredfish
+      - redfishagent
 
   15g:
     build:
@@ -246,7 +247,7 @@ services:
       disable: true
     restart: "no"
     networks:
-      - agentredfish
+      - redfishagent
 
   16g:
     build:
@@ -261,7 +262,7 @@ services:
       disable: true
     restart: "no"
     networks:
-      - agentredfish
+      - redfishagent
 
   17g:
     build:
@@ -272,12 +273,14 @@ services:
     volumes:
       - ~/redfish-mockups/R670_iDRAC_1.20.60.50/redfish:/redfish
       - ~/redfish-mockups/ssl:/certs
+    #environment:
+    #  - LOG_LEVEL=DEBUG
     healthcheck:
       disable: true
     restart: "no"
     networks:
-      - agentredfish
+      - redfishagent
 
 networks:
-  agentredfish:
+  redfishagent:
     driver: bridge

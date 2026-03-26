@@ -21,7 +21,7 @@ class InventoryService:
 		context: Optional context dict to pass to plugins during initialization.
 	"""
 
-	def __init__(self, plugin_package: str = "agentredfish.plugins.inventory", context: Optional[Dict[str, Any]] = None):
+	def __init__(self, plugin_package: str = "redfishagent.plugins.inventory", context: Optional[Dict[str, Any]] = None):
 		self.plugin_package = plugin_package
 		self.context = context or {}
 		self.loader = PluginLoader(self.plugin_package)

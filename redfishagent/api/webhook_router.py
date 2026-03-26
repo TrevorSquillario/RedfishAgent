@@ -17,14 +17,14 @@ def get_app(request: Request) -> AgentFishApp:
 	Raises HTTPException(500) if the app hasn't been initialized.
 	"""
 	app_state = getattr(request.app, "state", None)
-	agentredfish = getattr(app_state, "agentfish_app", None) if app_state is not None else None
-	if agentredfish is None:
+	redfishagent = getattr(app_state, "agentfish_app", None) if app_state is not None else None
+	if redfishagent is None:
 		raise HTTPException(status_code=500, detail="Server not initialized")
-	return agentredfish
+	return redfishagent
 
 
 @router.post("/alerts/prometheus")
-async def receive_alerts(request: Request, agentredfish: AgentFishApp = Depends(get_app)) -> Dict[str, Any]:
+async def receive_alerts(request: Request, redfishagent: AgentFishApp = Depends(get_app)) -> Dict[str, Any]:
 	"""Receive Alertmanager webhook POSTs at /api/webhook/alerts.
 
 	Stores the last-received payload on the `AgentFishApp` instance
@@ -38,7 +38,7 @@ async def receive_alerts(request: Request, agentredfish: AgentFishApp = Depends(
 
 		# Persist payload on the app instance for other services/plugins
 		# Use the webhook service initialized on the AgentFishApp instance
-		wh = getattr(agentredfish, "webhook_service", None)
+		wh = getattr(redfishagent, "webhook_service", None)
 		if wh is not None:
 			wh.handle_prometheus(payload)
 		else:

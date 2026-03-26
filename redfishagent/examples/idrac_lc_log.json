@@ -1,0 +1,35 @@
+{
+    "@odata.context": "/redfish/v1/$metadata#LogEntry.LogEntry",
+    "@odata.id": "/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/Lclog/Entries/73571",
+    "@odata.type": "#LogEntry.v1_18_0.LogEntry",
+    "Created": "2026-03-16T08:24:52-05:00",
+    "Description": "Log Entry 73571",
+    "EntryType": "Oem",
+    "Id": "73571",
+    "Links": {
+        "OriginOfCondition": {
+            "@odata.id": "/redfish/v1/Managers/iDRAC.Embedded.1"
+        }
+    },
+    "Message": "Unable to log in for root from 100.92.1.78 using IPMI over LAN.",
+    "MessageArgs": [
+        "root",
+        "100.92.1.78",
+        "IPMI over LAN"
+    ],
+    "MessageArgs@odata.count": 3,
+    "MessageId": "IDRAC.2.13.USR0031",
+    "Name": "Log Entry 73571",
+    "Oem": {
+        "Dell": {
+            "@odata.type": "#DellLCLogEntry.v1_2_0.DellLCLogEntry",
+            "AgentID": "RACLOG",
+            "BitMask": "4097",
+            "Category": "Audit",
+            "Comment": null,
+            "LastUpdatedByUser": null
+        }
+    },
+    "OemRecordFormat": "Dell",
+    "Severity": "OK"
+}

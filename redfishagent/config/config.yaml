@@ -1,0 +1,6 @@
+plugins:
+  inventory:
+    - yaml
+  output:
+mcp:
+  - http://dell-idrac-redfish-mcp:8080

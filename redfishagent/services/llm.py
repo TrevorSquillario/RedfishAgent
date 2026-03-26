@@ -16,8 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class LLMService:
-	def __init__(self, redis_service: RedisService):
+	def __init__(self, redis_service: RedisService, db_service: Optional[Any] = None):
 		self.redis = redis_service
+		self.db = db_service
 		self._running = False
 
 	def subscribe_to_alerts(self, stream_name: str = "alerts", start_id: str = "0-0", block_ms: int = 1000) -> None:
@@ -64,9 +65,9 @@ class LLMService:
 
 		Returns the embedding vector on success or `None` on error.
 		"""
-		api_base = os.getenv("OPENAI_API_BASE")
-		api_key = os.getenv("OPENAI_API_KEY")
-		model = os.getenv("OPENAI_MODEL", "text-embedding-3-small")
+		api_base = os.getenv("OPENAI_API_BASE_EMBED", os.getenv("OPENAI_API_BASE"))
+		api_key = os.getenv("OPENAI_API_KEY_EMBED", os.getenv("OPENAI_API_KEY"))
+		model = os.getenv("OPENAI_MODEL_EMBED", "Qwen3-Embedding-4B")
 
 		if api_key:
 			openai.api_key = api_key

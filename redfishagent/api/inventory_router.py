@@ -17,14 +17,14 @@ def get_app(request: Request) -> AgentFishApp:
 	Raises HTTPException(500) if the app hasn't been initialized.
 	"""
 	app_state = getattr(request.app, "state", None)
-	agentredfish = getattr(app_state, "agentfish_app", None) if app_state is not None else None
-	if agentredfish is None:
+	redfishagent = getattr(app_state, "agentfish_app", None) if app_state is not None else None
+	if redfishagent is None:
 		raise HTTPException(status_code=500, detail="Server not initialized")
-	return agentredfish
+	return redfishagent
 
 
 @router.get("/targets")
-def get_targets(agentredfish: AgentFishApp = Depends(get_app)) -> List[Dict[str, Any]]:
+def get_targets(redfishagent: AgentFishApp = Depends(get_app)) -> List[Dict[str, Any]]:
 	"""Run inventory plugins and return their results.
 
 	Prefer the already-initialized `AgentFishApp.inventory_loader`. If that
@@ -34,7 +34,7 @@ def get_targets(agentredfish: AgentFishApp = Depends(get_app)) -> List[Dict[str,
 		logger.info("Handling /api/inventory/targets request")
 
 		# Use pre-loaded inventory loader when available
-		loader = getattr(agentredfish, "inventory_loader", None)
+		loader = getattr(redfishagent, "inventory_loader", None)
 		if loader is None:
 			return []
 

@@ -31,12 +31,12 @@ class PluginLoader:
         # Try to import the project's base interfaces (do inside method to
         # avoid potential circular imports). If unavailable, fall back to None.
         try:
-            from agentredfish.base.inventory_plugin_base import InventoryPluginInterface
+            from redfishagent.base.inventory_plugin_base import InventoryPluginInterface
         except Exception:
             InventoryPluginInterface = None
 
         try:
-            from agentredfish.base.output_plugin_base import OutputPluginInterface
+            from redfishagent.base.output_plugin_base import OutputPluginInterface
         except Exception:
             OutputPluginInterface = None
 
@@ -131,7 +131,7 @@ class PluginLoader:
         results: List[Dict[str, Any]] = []
         # import here to avoid circular imports when module is loaded
         try:
-            from agentredfish.base.inventory_plugin_base import InventoryPluginInterface
+            from redfishagent.base.inventory_plugin_base import InventoryPluginInterface
         except Exception:
             InventoryPluginInterface = None
 
@@ -199,7 +199,7 @@ class PluginLoader:
         """
         results: Dict[str, Any] = {}
         try:
-            from agentredfish.base.output_plugin_base import OutputPluginInterface
+            from redfishagent.base.output_plugin_base import OutputPluginInterface
         except Exception:
             OutputPluginInterface = None
 

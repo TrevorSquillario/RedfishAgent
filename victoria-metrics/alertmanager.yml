@@ -9,4 +9,4 @@ receivers:
   - name: blackhole
   - name: webhook-receiver
     webhook_configs:
-      - url: "http://agentredfish:8000/api/webhook/alerts/prometheus"
+      - url: "http://redfishagent:8000/api/webhook/alerts/prometheus"

@@ -28,7 +28,7 @@ class AgentFishApp:
         if self._initialized:
             return
         # initialize logger
-        self.logger = setup_logger("agentredfish.app")
+        self.logger = setup_logger("redfishagent.app")
 
         # Load configuration (may fail if config file not present)
         try:
@@ -59,8 +59,16 @@ class AgentFishApp:
             # best-effort: continue even if we can't inject logger
             pass
 
+        # Initialize DatabaseManager (services/database.py)
+        try:
+            self.db_manager = init_database()
+            self.logger.info("DatabaseManager initialized")
+        except Exception as e:
+            self.logger.warning(f"Could not initialize DatabaseManager: {e}")
+            self.db_manager = None
+
         # Context passed to plugins during initialization
-        context = {"config": config_model, "logger": self.logger, "app": self}
+        context = {"config": config_model, "logger": self.logger, "app": self, "db": self.db_manager}
 
         # Discover and initialize plugins
         try:
@@ -101,7 +109,7 @@ class AgentFishApp:
 
         # Initialize LLMService and start background listener for alerts
         try:
-            self.llm_service = LLMService(self.redis_service)
+            self.llm_service = LLMService(self.redis_service, self.db_manager)
             self.logger.info("LLMService initialized")
             try:
                 import threading
@@ -118,14 +126,6 @@ class AgentFishApp:
         except Exception as e:
             self.logger.warning(f"Could not initialize LLMService: {e}")
             self.llm_service = None
-
-        # Initialize DatabaseManager (services/database.py)
-        try:
-            self.db_manager = init_database()
-            self.logger.info("DatabaseManager initialized")
-        except Exception as e:
-            self.logger.warning(f"Could not initialize DatabaseManager: {e}")
-            self.db_manager = None
 
         self._initialized = True
 

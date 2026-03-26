@@ -1,8 +1,8 @@
 groups:
   - name: redfish.logs
     rules:
-      - alert: RedfishCriticalLogEntry
-        expr: idrac_events_log_entry{severity="Critical"} > 0
+      - alert: RedfishCriticalLCLogEntry
+        expr: idrac_events_lc_log_entry{severity="Critical"} > 0
         for: 0m
         labels:
           severity: critical

@@ -99,6 +99,38 @@ def rewrite_ids_random(event):
 
     return event
 
+
+def modify_first_log(event):
+    """For Event payloads, change the first log's fields for testing.
+
+    - Set `Severity` to "Critical"
+    - Set `Message` to the specified CPU thermal trip text
+    - Set `MessageId` to "IDRAC.2.13.CPU0001"
+    """
+    if not isinstance(event, dict):
+        return event
+
+    cpu_message = "CPU 1 has a thermal trip (over-temperature) event."
+    cpu_message_id = "IDRAC.2.13.CPU0001"
+
+    # If payload contains an Events list, modify the first event entry
+    if 'Members' in event and isinstance(event['Members'], list) and len(event['Members']) > 0:
+        first = event['Members'][0]
+        if isinstance(first, dict):
+            first['Severity'] = 'Critical'
+            first['Message'] = cpu_message
+            first['MessageId'] = cpu_message_id
+    else:
+        # Fallback: modify top-level fields if present
+        if 'Severity' in event:
+            event['Severity'] = 'Critical'
+        if 'Message' in event:
+            event['Message'] = cpu_message
+        if 'MessageId' in event:
+            event['MessageId'] = cpu_message_id
+
+    return event
+
 async def idrac_generator(event_type):
     for i in range(random.randint(1,1000)):
         files = get_files(event_type)
@@ -108,6 +140,7 @@ async def idrac_generator(event_type):
             if event_type == "Event":
                 idrac_sse_example_json = update_timestamp_on_logs(idrac_sse_example_json)
                 idrac_sse_example_json = rewrite_ids_random(idrac_sse_example_json)
+                idrac_sse_example_json = modify_first_log(idrac_sse_example_json)
             else:
                 idrac_sse_example_json = update_timestamp_on_metrics(idrac_sse_example_json)
                 idrac_sse_example_json = rewrite_ids_random(idrac_sse_example_json)
@@ -174,6 +207,56 @@ def sel_entries_index(request: Request):
         return JSONResponse(status_code=500, content={"error": "failed to load index.json"})
 
 
+@app.api_route('/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/Lclog/Entries', methods=["GET", "HEAD"])
+def lclog_entries_index(request: Request):
+    """Load the local index.json for Lclog entries, update the Created date to today (keep time/tz), and return it."""
+    local_index = os.path.join('/redfish', 'v1', 'Managers', 'iDRAC.Embedded.1', 'LogServices', 'Lclog', 'Entries', 'index.json')
+    logger.debug("Lclog entries request -> local file %s", local_index)
+
+    if not os.path.exists(local_index) or not os.path.isfile(local_index):
+        logger.debug("Lclog index.json not found: %s", local_index)
+        return JSONResponse(status_code=404, content={"error": "index.json not found"})
+
+    # If this is a HEAD request, return headers-only response
+    if request.method == 'HEAD':
+        return Response(status_code=200)
+
+    try:
+        with open(local_index, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        today = datetime.now().strftime('%Y-%m-%d')
+
+        members = data.get('Members', [])
+        for m in members:
+            created = m.get('Created')
+            if created and isinstance(created, str) and len(created) > 10:
+                # replace the date portion (first 10 chars) with today's date, keep time and timezone
+                new_created = today + created[10:]
+                logger.debug("Updating member %s Created: %s -> %s", m.get('Id', '<no id>'), created, new_created)
+                m['Created'] = new_created
+
+        # update Members@odata.count if present
+        if 'Members@odata.count' in data:
+            try:
+                data['Members@odata.count'] = len(members)
+            except Exception:
+                pass
+
+        # Rewrite Id fields for testing before returning
+        data = rewrite_ids_random(data)
+        # Apply the same first-log modifications used for SSE Event payloads
+        data = modify_first_log(data)
+        logger.debug("Serving modified Lclog entries index.json (%d members)", len(members))
+        return JSONResponse(content=data)
+    except json.JSONDecodeError as e:
+        logger.error("Invalid JSON in Lclog index file %s: %s", local_index, e)
+        return JSONResponse(status_code=500, content={"error": "invalid json in index.json"})
+    except Exception as e:
+        logger.exception("Error loading Lclog index file %s", local_index)
+        return JSONResponse(status_code=500, content={"error": "failed to load index.json"})
+
+
 # Subscription endpoints to support clients creating/deleting subscriptions
 @app.post('/redfish/v1/EventService/Subscriptions')
 async def create_subscription(request: Request):
@@ -198,8 +281,8 @@ async def delete_subscription(sub_id: str):
     return JSONResponse(status_code=404, content={"error": "subscription not found"})
 
 # Dynamic endpoint: map incoming /redfish/... URI to a local index.json file under /app
-@app.get('/redfish/{full_path:path}')
-def redfish_dynamic(full_path: str):
+@app.api_route('/redfish/{full_path:path}', methods=["GET", "HEAD"])
+def redfish_dynamic(request: Request, full_path: str):
     """Return an index.json file from the local filesystem that mirrors the requested URI.
 
     Example: request `/redfish/v1/Managers/iDRAC.Embedded.1` will try to return
@@ -216,6 +299,10 @@ def redfish_dynamic(full_path: str):
     if not os.path.isfile(local_index):
         logger.warning("Index path exists but is not a file: %s", local_index)
         return JSONResponse(status_code=404, content={"error": "index.json not found"})
+
+    # Mirror GET behavior for HEAD requests: same status, no body.
+    if request.method == 'HEAD':
+        return Response(status_code=200)
 
     try:
         # inspect file size and a small preview to aid debugging malformed/empty files
