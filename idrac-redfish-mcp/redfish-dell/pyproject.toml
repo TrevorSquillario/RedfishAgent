@@ -1,0 +1,16 @@
+[project]
+name = "redfish_dell"
+version = "1.0.0"
+dependencies = [
+    "redfish>=3.0.0"  # This ensures the DMTF library is installed automatically
+]
+
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

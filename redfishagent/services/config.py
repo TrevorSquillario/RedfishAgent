@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
+import os
 
 import yaml
 
@@ -16,6 +17,7 @@ class PluginsConfig:
 @dataclass
 class ConfigModel:
     plugins: PluginsConfig = field(default_factory=PluginsConfig)
+    mcp: List[str] = field(default_factory=list)
 
 
 class ConfigService:
@@ -27,7 +29,9 @@ class ConfigService:
     """
 
     def __init__(self):
-        self.path = Path("/config/config.yaml")
+        # Allow overriding the config path via the CONFIG_PATH env var
+        config_path = os.getenv("CONFIG_PATH", "/config/config.yaml")
+        self.path = Path(config_path)
         self.config = self._load()
 
     def _load(self) -> ConfigModel:
@@ -37,5 +41,9 @@ class ConfigService:
         plugins = data.get("plugins", {}) or {}
         inventory = plugins.get("inventory") or []
         output = plugins.get("output") or []
+        mcp = data.get("mcp") or []
 
-        return ConfigModel(plugins=PluginsConfig(inventory=list(inventory), output=list(output)))
+        return ConfigModel(
+            plugins=PluginsConfig(inventory=list(inventory), output=list(output)),
+            mcp=list(mcp),
+        )

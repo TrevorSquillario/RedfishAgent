@@ -13,18 +13,18 @@ from services.llm import LLMService
 from services.database import init_database
 import os
 
-class AgentFishApp:
+class RedfishAgentApp:
     _instance = None
     
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(AgentFishApp, cls).__new__(cls)
+            cls._instance = super(RedfishAgentApp, cls).__new__(cls)
             # Initialize the singleton instance
             cls._instance._initialized = False
         return cls._instance
     
     def __init__(self):
-        """Initialize the AgentFishApp with required services (only once)"""
+        """Initialize the RedfishAgentApp with required services (only once)"""
         if self._initialized:
             return
         # initialize logger
@@ -35,6 +35,21 @@ class AgentFishApp:
             self.config_service = ConfigService()
             self.logger.info("ConfigService loaded")
             config_model = getattr(self.config_service, "config", None)
+            # Log the full parsed config for debugging/visibility
+            try:
+                import json
+
+                try:
+                    cfg_text = json.dumps(
+                        config_model,
+                        default=lambda o: getattr(o, "__dict__", str(o)),
+                        indent=2,
+                    )
+                except TypeError:
+                    cfg_text = str(config_model)
+                self.logger.info("Full config:\n%s", cfg_text)
+            except Exception:
+                self.logger.exception("Failed to serialize/log config_model")
         except Exception as e:
             self.logger.warning(f"Could not load ConfigService: {e}")
             self.config_service = None
@@ -109,7 +124,8 @@ class AgentFishApp:
 
         # Initialize LLMService and start background listener for alerts
         try:
-            self.llm_service = LLMService(self.redis_service, self.db_manager)
+            # pass the parsed config model (not the service instance)
+            self.llm_service = LLMService(self.redis_service, self.db_manager, config_model)
             self.logger.info("LLMService initialized")
             try:
                 import threading

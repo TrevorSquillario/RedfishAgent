@@ -5,13 +5,14 @@ import subprocess
 import gzip
 from importlib import util
 from peewee import *
-from playhouse.postgres_ext import PostgresqlExtDatabase
 from playhouse.migrate import PostgresqlMigrator
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Tuple
 from pathlib import Path
 from services.migrations import get_migration_files
 from utils.logging import setup_logger
-from models.db import database_proxy, KB
+from models.db import database_proxy, KB, AgentSession, TraceEvent
+import uuid
+from peewee_async import PooledPostgresqlDatabase
 
 # Configure logging
 logger = setup_logger(__name__)
@@ -20,7 +21,7 @@ MIGRATIONS_VERSION_TABLE = 'migrations_version'
 
 class DatabaseManager:
     # Register models here so `create_tables` creates them on startup.
-    _tables = [KB]
+    _tables = [KB, AgentSession, TraceEvent]
 
     def __init__(self):
         self._initialize()
@@ -35,23 +36,26 @@ class DatabaseManager:
         POSTGRES_HOST = os.getenv('POSTGRES_HOST', 'localhost')
         POSTGRES_PORT = os.getenv('POSTGRES_PORT', '5432')
 
-        self._db = PostgresqlExtDatabase(
+        # PostgresqlDatabase from peewee_async wraps aiopg to provide both a
+        # synchronous drop-in connection and an async connection pool.
+        self._db = PooledPostgresqlDatabase(
             POSTGRES_DB,
             user=POSTGRES_USER,
             password=POSTGRES_PASSWORD,
             host=POSTGRES_HOST,
-            port=POSTGRES_PORT,
-            autorollback=True
+            port=int(POSTGRES_PORT),
         )
 
-        # Bind the Peewee Proxy to the actual db instance
+        # Bind the Peewee Proxy so models resolve to this database.
         database_proxy.initialize(self._db)
-        self.db = database_proxy
 
-        self._db.connect()
-        self._db.create_tables(self._tables)
-        self._run_migrations()
-        #self._db.close()
+        # allow_sync() temporarily permits synchronous queries (required for
+        # table creation / migrations) and closes the sync connection on exit.
+        with self._db.allow_sync():
+            self._db.connect()
+            self._db.execute_sql("CREATE EXTENSION IF NOT EXISTS vector;")
+            self._db.create_tables(self._tables)
+            self._run_migrations()
 
     def _run_migrations(self):
         """Run all pending database migrations"""
@@ -170,7 +174,7 @@ class DatabaseManager:
         return str(sql_gz_path)
 
     def close(self):
-        """Close the underlying database connection if open."""
+        """Close the synchronous database connection if open."""
         try:
             if hasattr(self, '_db') and not self._db.is_closed():
                 self._db.close()
@@ -178,28 +182,33 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f'Error closing database: {e}')
 
-    def save_kb(self, file_name: str, file_modified: datetime, embedding: List[float]) -> KB:
-        """Save a KB record containing file metadata and embedding vector.
+    async def aclose(self):
+        """Close the async connection pool managed by peewee-async."""
+        try:
+            if hasattr(self, '_db') and self._db.is_connected:
+                await self._db.aio_close()
+                logger.info('Async database connection pool closed')
+        except Exception as e:
+            logger.error(f'Error closing async database pool: {e}')
 
-        This will create a new `KB` row. The `embedding` parameter should be
-        a list/sequence of floats; when `pgvector` is installed the
-        `VectorField` will store it as a true pgvector value. If pgvector is
-        unavailable the field falls back to JSON and the list will be stored
-        as JSON.
+    async def save_kb(self, file_name: str, file_modified: datetime, embedding: List[float]) -> KB:
+        """Asynchronously save a KB record containing file metadata and embedding vector.
+
+        The `embedding` parameter should be a list/sequence of floats; when
+        `pgvector` is installed the `VectorField` will store it as a true
+        pgvector value.
         """
         try:
-            with self._db.atomic():
-                kb = KB.create(
-                    file_name=file_name,
-                    file_modified=file_modified,
-                    embedding=embedding,
-                )
+            kb = await KB.aio_create(
+                file_name=file_name,
+                file_modified=file_modified,
+                embedding=embedding,
+            )
             logger.info(f"Saved KB record for {file_name} (id={kb.id})")
             return kb
         except Exception as e:
             logger.error(f"Failed to save KB record for {file_name}: {e}")
             raise
-
 
 # Module-level singleton and helpers
 _db_manager: Optional[DatabaseManager] = None

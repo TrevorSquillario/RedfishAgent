@@ -1,0 +1,61 @@
+services:
+  14g:
+    image: dmtf/redfish-mockup-server:latest
+    volumes:
+      - ~/redfish-mockups/R740xd_iDRAC_7.00.00.174:/mockup
+      - ~/redfish-mockups/ssl:/certs
+    network_mode: "host"
+    healthcheck:
+      disable: true
+    restart: "no"
+    entrypoint: >
+     python /usr/src/app/redfishMockupServer.py 
+      -H 0.0.0.0 -p 8001
+      -D /mockup
+      -s --cert /certs/server.crt --key /certs/server.key
+
+  15g:
+    image: dmtf/redfish-mockup-server:latest
+    volumes:
+      - ~/redfish-mockups/R750_iDRAC_7.20.60.50:/mockup
+      - ~/redfish-mockups/ssl:/certs
+    network_mode: "host"
+    healthcheck:
+      disable: true
+    restart: "no"
+    entrypoint: >
+     python /usr/src/app/redfishMockupServer.py 
+      -H 0.0.0.0 -p 8002
+      -D /mockup
+      -s --cert /certs/server.crt --key /certs/server.key
+
+  16g:
+    image: dmtf/redfish-mockup-server:latest
+    volumes:
+      - ~/redfish-mockups/R7615_iDRAC_7.20.80.50:/mockup
+      - ~/redfish-mockups/ssl:/certs
+    network_mode: "host"
+    healthcheck:
+      disable: true
+    restart: "no"
+    entrypoint: >
+     python /usr/src/app/redfishMockupServer.py 
+      -H 0.0.0.0 -p 8003
+      -D /mockup
+      -s --cert /certs/server.crt --key /certs/server.key
+
+  17g:
+    image: dmtf/redfish-mockup-server:latest
+    volumes:
+      - ~/redfish-mockups/R670_iDRAC_1.20.60.50:/mockup
+      - ~/redfish-mockups/ssl:/certs
+    network_mode: "host"
+    healthcheck:
+      disable: true
+    restart: "no"
+    entrypoint: >
+     python /usr/src/app/redfishMockupServer.py 
+      -H 0.0.0.0 -p 8004
+      -D /mockup
+      -s --cert /certs/server.crt --key /certs/server.key
+      

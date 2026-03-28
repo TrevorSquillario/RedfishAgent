@@ -30,4 +30,4 @@ ENV PYTHONPATH=/app
 EXPOSE 8000
 
 # Start both servers
-CMD ["uvicorn", "main:app", "--reload", "--reload-exclude", "services/migrations/*.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--reload", "--reload-exclude", "services/migrations/*.py", "--reload-exclude", "models/db.py", "--timeout-graceful-shutdown", "1", "--host", "0.0.0.0", "--port", "8000"]

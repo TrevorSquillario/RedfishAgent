@@ -3,4 +3,5 @@ plugins:
     - yaml
   output:
 mcp:
-  - http://dell-idrac-redfish-mcp:8080
+  - http://idrac-redfish-mcp:8080/mcp
+  - file:///app/mcp/prometheus.py

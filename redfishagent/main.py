@@ -9,15 +9,16 @@ from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 from utils.logging import setup_logger
-from app import AgentFishApp
+from app import RedfishAgentApp
 from datetime import date, datetime
 
 from utils.api import handle_api_exception  
 from api.inventory_router import router as inventory_router
 from api.webhook_router import router as webhook_router
+from api.llm_router import router as llm_router
 
  # Initialize the app
-agentfish_app = AgentFishApp()
+redfishagent_app = RedfishAgentApp()
 
 app = FastAPI(
     title="RedfishAgent API",
@@ -27,6 +28,7 @@ app = FastAPI(
 
 app.include_router(inventory_router)
 app.include_router(webhook_router)
+app.include_router(llm_router)
 
 # Add CORS middleware to allow cross-origin requests
 app.add_middleware(
@@ -39,8 +41,8 @@ app.add_middleware(
 
 logger = setup_logger("api")
 
-# Expose the initialized AgentFishApp via app.state so route dependencies can access it
-app.state.agentfish_app = agentfish_app
+# Expose the initialized RedfishAgentApp via app.state so route dependencies can access it
+app.state.redfishagent_app = redfishagent_app 
 
 @app.get("/healthz")
 def healthz():
@@ -54,4 +56,5 @@ if __name__ == "__main__":
     import uvicorn
     #import openlit
     #openlit.init()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    #uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.dev(app, host="0.0.0.0", port=8000)

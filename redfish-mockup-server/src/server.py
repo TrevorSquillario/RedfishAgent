@@ -11,6 +11,7 @@ import os
 import logging
 import random
 from datetime import datetime, timezone
+import utils
 import httpx
 import uuid
 
@@ -76,60 +77,7 @@ def update_timestamp_on_metrics(event):
     return event
 
 
-def rewrite_ids_random(event):
-    """Rewrite common `Id` fields in the event to a random numeric string for testing."""
-    if not isinstance(event, dict):
-        return event
-
-    # Top-level Id
-    if 'Id' in event:
-        event['Id'] = str(random.randint(1, 99999))
-
-    # For Redfish log payloads that contain an "Events" list, rewrite inner Ids
-    if 'Events' in event and isinstance(event['Events'], list):
-        for e in event['Events']:
-            if isinstance(e, dict) and 'Id' in e:
-                e['Id'] = str(random.randint(1, 99999))
-
-    # For collection responses with Members, rewrite member Ids
-    if 'Members' in event and isinstance(event['Members'], list):
-        for m in event['Members']:
-            if isinstance(m, dict) and 'Id' in m:
-                m['Id'] = str(random.randint(1, 99999))
-
-    return event
-
-
-def modify_first_log(event):
-    """For Event payloads, change the first log's fields for testing.
-
-    - Set `Severity` to "Critical"
-    - Set `Message` to the specified CPU thermal trip text
-    - Set `MessageId` to "IDRAC.2.13.CPU0001"
-    """
-    if not isinstance(event, dict):
-        return event
-
-    cpu_message = "CPU 1 has a thermal trip (over-temperature) event."
-    cpu_message_id = "IDRAC.2.13.CPU0001"
-
-    # If payload contains an Events list, modify the first event entry
-    if 'Members' in event and isinstance(event['Members'], list) and len(event['Members']) > 0:
-        first = event['Members'][0]
-        if isinstance(first, dict):
-            first['Severity'] = 'Critical'
-            first['Message'] = cpu_message
-            first['MessageId'] = cpu_message_id
-    else:
-        # Fallback: modify top-level fields if present
-        if 'Severity' in event:
-            event['Severity'] = 'Critical'
-        if 'Message' in event:
-            event['Message'] = cpu_message
-        if 'MessageId' in event:
-            event['MessageId'] = cpu_message_id
-
-    return event
+# Reusable helpers moved to src/utils.py
 
 async def idrac_generator(event_type):
     for i in range(random.randint(1,1000)):
@@ -139,11 +87,11 @@ async def idrac_generator(event_type):
             idrac_sse_example_json = json.load(f)
             if event_type == "Event":
                 idrac_sse_example_json = update_timestamp_on_logs(idrac_sse_example_json)
-                idrac_sse_example_json = rewrite_ids_random(idrac_sse_example_json)
-                idrac_sse_example_json = modify_first_log(idrac_sse_example_json)
+                idrac_sse_example_json = utils.rewrite_ids_random(idrac_sse_example_json)
+                idrac_sse_example_json = utils.modify_first_log(idrac_sse_example_json)
             else:
                 idrac_sse_example_json = update_timestamp_on_metrics(idrac_sse_example_json)
-                idrac_sse_example_json = rewrite_ids_random(idrac_sse_example_json)
+                idrac_sse_example_json = utils.rewrite_ids_random(idrac_sse_example_json)
             yield json.dumps(idrac_sse_example_json) + '\n'
         await asyncio.sleep(random.randint(1,10))
 
@@ -177,27 +125,17 @@ def sel_entries_index(request: Request):
         with open(local_index, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
-        today = datetime.now().strftime('%Y-%m-%d')
-
-        members = data.get('Members', [])
-        for m in members:
-            created = m.get('Created')
-            if created and isinstance(created, str) and len(created) > 10:
-                # replace the date portion (first 10 chars) with today's date, keep time and timezone
-                new_created = today + created[10:]
-                logger.debug("Updating member %s Created: %s -> %s", m.get('Id', '<no id>'), created, new_created)
-                m['Created'] = new_created
-
-        # update Members@odata.count if present
-        if 'Members@odata.count' in data:
-            try:
-                data['Members@odata.count'] = len(members)
-            except Exception:
-                pass
+        # update Created date on members
+        data = utils.update_created_dates(data)
 
         # Rewrite Id fields for testing before returning
-        data = rewrite_ids_random(data)
-        logger.debug("Serving modified SEL entries index.json (%d members)", len(members))
+        data = utils.rewrite_ids_random(data)
+
+        # apply $top/$skip after all modifications
+        top, skip = utils.parse_top_skip(request.query_params)
+        data = utils.apply_top_skip(data, top, skip)
+
+        logger.debug("Serving modified SEL entries index.json (%d members)", len(data.get('Members', [])))
         return JSONResponse(content=data)
     except json.JSONDecodeError as e:
         logger.error("Invalid JSON in SEL index file %s: %s", local_index, e)
@@ -225,29 +163,18 @@ def lclog_entries_index(request: Request):
         with open(local_index, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
-        today = datetime.now().strftime('%Y-%m-%d')
+        # update Created date on members
+        data = utils.update_created_dates(data)
 
-        members = data.get('Members', [])
-        for m in members:
-            created = m.get('Created')
-            if created and isinstance(created, str) and len(created) > 10:
-                # replace the date portion (first 10 chars) with today's date, keep time and timezone
-                new_created = today + created[10:]
-                logger.debug("Updating member %s Created: %s -> %s", m.get('Id', '<no id>'), created, new_created)
-                m['Created'] = new_created
+        # Rewrite Id fields for testing before returning and apply first-log tweaks
+        data = utils.rewrite_ids_random(data)
+        data = utils.modify_first_log(data)
 
-        # update Members@odata.count if present
-        if 'Members@odata.count' in data:
-            try:
-                data['Members@odata.count'] = len(members)
-            except Exception:
-                pass
+        # apply $top/$skip after all modifications
+        top, skip = utils.parse_top_skip(request.query_params)
+        data = utils.apply_top_skip(data, top, skip)
 
-        # Rewrite Id fields for testing before returning
-        data = rewrite_ids_random(data)
-        # Apply the same first-log modifications used for SSE Event payloads
-        data = modify_first_log(data)
-        logger.debug("Serving modified Lclog entries index.json (%d members)", len(members))
+        logger.debug("Serving modified Lclog entries index.json (%d members)", len(data.get('Members', [])))
         return JSONResponse(content=data)
     except json.JSONDecodeError as e:
         logger.error("Invalid JSON in Lclog index file %s: %s", local_index, e)
@@ -319,6 +246,11 @@ def redfish_dynamic(request: Request, full_path: str):
             return JSONResponse(status_code=500, content={"error": "index.json empty"})
 
         data = json.loads(content)
+
+        # apply $top/$skip after loading and parsing the file
+        top, skip = utils.parse_top_skip(request.query_params)
+        data = utils.apply_top_skip(data, top, skip)
+
         logger.debug("Serving index file for %s", full_path)
         return JSONResponse(content=data)
     except json.JSONDecodeError as e:
@@ -332,25 +264,29 @@ def redfish_dynamic(request: Request, full_path: str):
 @app.on_event("startup")
 async def startup_event_sender():
     listener_url = os.environ.get('REDFISH_LISTENER_URL') or os.environ.get('LISTENER_DEST') or 'http://127.0.0.1:8080/redfish/events'
-    logger.debug(f"Starting background event sender to {listener_url}")
+    enable_alerts = str(os.environ.get('ENABLE_ALERTS', 'True')).lower() in ('1', 'true', 'yes')
+    enable_metrics = str(os.environ.get('ENABLE_METRICS', 'True')).lower() in ('1', 'true', 'yes')
+    logger.debug(f"Startup senders config: listener={listener_url} ENABLE_ALERTS={enable_alerts} ENABLE_METRICS={enable_metrics}")
+
     async def event_sender():
         async with httpx.AsyncClient() as client:
             async for item in idrac_generator('Event'):
-                # idrac_generator yields JSON strings with a trailing newline
                 payload = None
                 try:
                     payload = json.loads(item)
                 except Exception:
-                    # fallback: send raw string
                     payload = item.strip()
                 try:
                     resp = await client.post(listener_url, json=payload, timeout=10)
-                    logger.debug(f"Posted event to {listener_url}: status={resp.status_code}")
+                    logger.info(f"Posted event to {listener_url}: status={resp.status_code}")
                 except Exception as e:
                     logger.error(f"Failed to post event to {listener_url}: {e}")
                 await asyncio.sleep(15)
 
-    asyncio.create_task(event_sender())
+    if enable_alerts:
+        asyncio.create_task(event_sender())
+    else:
+        logger.info('Background event sender disabled via ENABLE_ALERTS')
 
     async def metric_sender():
         async with httpx.AsyncClient() as client:
@@ -362,9 +298,12 @@ async def startup_event_sender():
                     payload = item.strip()
                 try:
                     resp = await client.post(listener_url, json=payload, timeout=10)
-                    logger.debug(f"Posted metric to {listener_url}: status={resp.status_code}")
+                    logger.info(f"Posted metric to {listener_url}: status={resp.status_code}")
                 except Exception as e:
                     logger.error(f"Failed to post metric to {listener_url}: {e}")
                 await asyncio.sleep(15)
 
-    asyncio.create_task(metric_sender())
+    if enable_metrics:
+        asyncio.create_task(metric_sender())
+    else:
+        logger.info('Background metric sender disabled via ENABLE_METRICS')

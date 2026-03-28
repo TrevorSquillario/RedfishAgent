@@ -3,9 +3,10 @@ services:
   vllm-embed:
     image: vllm/vllm-openai:latest
     container_name: vllm-embed
+    network_mode: host
     ipc: host
-    ports:
-      - "8091:8000" # VLLM API access
+    #ports:
+    #  - "8091:8000" # VLLM API access
     ulimits:
       memlock: -1
       stack: 67108864
@@ -15,12 +16,12 @@ services:
     command: >
       --model Qwen/Qwen3-Embedding-4B
       --runner pooling
-      --port 8000
+      --port 8091
       --gpu-memory-utilization 0.25
       --compilation-config '{"cache_dir": "/root/.cache/vllm"}'
     restart: "no"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8091/health"]
       interval: 30s
       timeout: 10s
       retries: 10
@@ -38,9 +39,10 @@ services:
     #  context: .
     #  dockerfile: vllm/Dockerfile
     container_name: vllm
+    network_mode: host
     ipc: host
-    ports:
-      - "8090:8000" # VLLM API access
+    #ports:
+    #  - "8090:8000" # VLLM API access
     ulimits:
       memlock: -1
       stack: 67108864
@@ -51,7 +53,7 @@ services:
       --model nvidia/Nemotron-Cascade-2-30B-A3B
       --dtype bfloat16
       --tensor-parallel-size 1
-      --port 8000 
+      --port 8090
       --max-model-len 262144 
       --gpu-memory-utilization 0.65
       --reasoning-parser nemotron_v3 
@@ -65,7 +67,7 @@ services:
       --compilation-config '{"cache_dir": "/root/.cache/vllm"}'
     restart: "no"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
       interval: 30s
       timeout: 10s
       retries: 10

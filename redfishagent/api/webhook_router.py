@@ -4,30 +4,30 @@ from fastapi import APIRouter, Request, Depends, HTTPException
 from typing import Dict, Any, List
 
 from utils.logging import setup_logger
-from app import AgentFishApp
+from app import RedfishAgentApp
 from utils.api import handle_api_exception
 logger = setup_logger("api")
 
 router = APIRouter(prefix="/api/webhook")
 
 
-def get_app(request: Request) -> AgentFishApp:
-	"""Dependency to retrieve the initialized AgentFishApp from app.state.
+def get_app(request: Request) -> RedfishAgentApp:
+	"""Dependency to retrieve the initialized RedfishAgentApp from app.state.
 
 	Raises HTTPException(500) if the app hasn't been initialized.
 	"""
 	app_state = getattr(request.app, "state", None)
-	redfishagent = getattr(app_state, "agentfish_app", None) if app_state is not None else None
+	redfishagent = getattr(app_state, "redfishagent_app", None) if app_state is not None else None
 	if redfishagent is None:
 		raise HTTPException(status_code=500, detail="Server not initialized")
 	return redfishagent
 
 
 @router.post("/alerts/prometheus")
-async def receive_alerts(request: Request, redfishagent: AgentFishApp = Depends(get_app)) -> Dict[str, Any]:
+async def receive_alerts(request: Request, redfishagent: RedfishAgentApp = Depends(get_app)) -> Dict[str, Any]:
 	"""Receive Alertmanager webhook POSTs at /api/webhook/alerts.
 
-	Stores the last-received payload on the `AgentFishApp` instance
+	Stores the last-received payload on the `RedfishAgentApp` instance
 	(at `last_webhook_alert`) and logs it. Returns a small ack.
 	"""
 	try:
@@ -37,12 +37,12 @@ async def receive_alerts(request: Request, redfishagent: AgentFishApp = Depends(
 		logger.info(f"{len(payload.get('alerts', []))} alerts received")
 
 		# Persist payload on the app instance for other services/plugins
-		# Use the webhook service initialized on the AgentFishApp instance
+		# Use the webhook service initialized on the RedfishAgentApp instance
 		wh = getattr(redfishagent, "webhook_service", None)
 		if wh is not None:
 			wh.handle_prometheus(payload)
 		else:
-			logger.warning("No webhook_service available on AgentFishApp")
+			logger.warning("No webhook_service available on RedfishAgentApp")
 
 		return {"status": "received"}
 

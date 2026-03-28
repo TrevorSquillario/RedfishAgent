@@ -2,12 +2,13 @@ groups:
   - name: redfish.logs
     rules:
       - alert: RedfishCriticalLCLogEntry
-        expr: idrac_events_lc_log_entry{severity="Critical"} > 0
+        # Only fire if the counter has increased in the last 2 minutes
+        expr:  sum by (id, instance, message) (delta(idrac_events_lc_log_entry{severity="Critical"}[2m])) > 0
         for: 0m
         labels:
           severity: critical
           alertsource: redfish
         annotations:
-          summary: "Critical Redfish log entry on {{ $labels.id }}"
+          summary: "Critical Redfish log entry on {{ $labels.instance }}"
           description: "{{ $labels.message }} (event id={{ $labels.id }})"
 

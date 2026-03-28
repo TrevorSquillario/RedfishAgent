@@ -31,22 +31,30 @@ services:
     volumes:
       - ./redfishagent/config/config.yaml:/config/config.yaml:ro
       - ./inventory.yaml:/config/inventory.yaml:ro
+      - ./redfishagent:/app:cached
     environment:
       - LOG_LEVEL=DEBUG
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
       #- REDIS_PASSWORD=
-      - POSTGRES_DB=agentredfish_db
+      - POSTGRES_DB=redfishagent_db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
       - POSTGRES_HOST=pgvector
       - POSTGRES_PORT=5432
-      - OPENAI_API_BASE=http://127.0.0.1:8000
-      - OPENAI_MODEL=text-embedding-3-small
-      - OPENAI_API_KEY=
+      - OPENAI_API_BASE=http://192.168.0.30:8090 # vllm
+      - OPENAI_MODEL=nvidia/Nemotron-Cascade-2-30B-A3B
+      # Leave OPENAI_API_KEY unset for local OpenAI-compatible servers like vllm
+      - PHOENIX_COLLECTOR_ENDPOINT=http://phoenix:4317
+      - REDIS_STREAM=redfish_alerts
     networks:
       - redfishagent
+    depends_on:
+      redis:
+        condition: service_healthy
+      idrac-redfish-mcp:
+        condition: service_healthy
 
   pgvector:
     image: pgvector/pgvector:pg17 # PostgreSQL with pgvector support
@@ -54,16 +62,16 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: agentredfish_db
+      POSTGRES_DB: redfishagent_db
     ports:
       - "5432:5432"
-    volumes:
-      - ~/app/pgvector:/var/lib/postgresql/data
+    #volumes:
+      #- ~/app/pgvector:/var/lib/postgresql/data
       #- ./postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - redfishagent
 
   redfish-listener:
-    profiles:
-      - redfish-listener
     build:
       context: ./redfish-listener-go
     image: redfishagent/redfish-listener:latest
@@ -75,15 +83,18 @@ services:
     #volumes:
     #  - ~/redfish-mockups/ssl:/certs
     environment:
-      - LISTENER_DEST=http://127.0.0.1:8080/redfish/events
+      - LISTENER_DEST=http://192.168.0.30:8080/redfish/events
       #- LISTENER_DEST=https://127.0.0.1:8443/redfish/events
       #- LISTENER_CERT=/certs/server.crt
       #- LISTENER_KEY=/certs/server.key
       - REDIS_URL=redis://redis:6379
-      - INVENTORY_URL=http://inventory:8080/api/v1/targets
+      - REDIS_STREAM=redfish_alerts
+      - INVENTORY_URL=http://redfishagent:8080/api/v1/targets
     # command: ["python", "src/redfish_listener.py", "-c", "src/config.ini"]
     depends_on:
       redis:
+        condition: service_healthy
+      redfishagent:
         condition: service_healthy
     networks:
       - redfishagent
@@ -103,6 +114,29 @@ services:
       - ./idrac-exporter/config.yaml:/etc/prometheus/idrac.yml:ro
     ports:
       - "9348:9348"
+    networks:
+      - redfishagent
+
+  idrac-redfish-mcp:
+    build:
+      context: ./idrac-redfish-mcp
+      dockerfile: Dockerfile
+    image: idrac-redfish-mcp:latest
+    container_name: idrac-redfish-mcp
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./idrac-redfish-mcp/src:/app
+      - ./idrac-redfish-mcp/redfish-dell:/app/redfish-dell
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 1s
+      timeout: 1s
+      retries: 1
+      start_period: 0s
+    ports:
+      - "8092:8080"
     networks:
       - redfishagent
 
@@ -170,7 +204,7 @@ services:
       - ./victoria-metrics/rules/alerts-health.yml:/etc/alerts/alerts-health.yml
       - ./victoria-metrics/rules/alerts-vmagent.yml:/etc/alerts/alerts-vmagent.yml
       - ./victoria-metrics/rules/alerts-vmalert.yml:/etc/alerts/alerts-vmalert.yml
-      - ./victoria-metrics/rules/alerts-redfish-alerts.yml:/etc/alerts/alerts-redfish-alerts.yml
+      #- ./victoria-metrics/rules/alerts-redfish-alerts.yml:/etc/alerts/alerts-redfish-alerts.yml
     command:
       - "--datasource.url=http://victoriametrics:8428/"
       - "--remoteRead.url=http://victoriametrics:8428/"
@@ -218,6 +252,16 @@ services:
       - ./grafana/provisioning/dashboards/alert-statistics.json:/var/lib/grafana/dashboards/alert-statistics.json
       - ./grafana/provisioning/dashboards/metrics-explorer.json:/var/lib/grafana/dashboards/metrics-explorer.json
 
+  # LLM Tracing and Debugging Tool
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    ports:
+      - "6006:6006"  # UI and OTLP HTTP collector
+      - "4317:4317"  # OTLP gRPC collector
+    restart: always
+    networks:
+      - redfishagent
+
   # Redfish mockup servers for different iDRAC versions
   14g:
     build:
@@ -225,6 +269,10 @@ services:
       dockerfile: redfish-mockup-server/Dockerfile
     image: redfish-mockup-server:latest
     container_name: redfish-mockup-14g
+    environment: 
+      - LISTENER_DEST=http://192.168.0.30:8080/redfish/events
+      - ENABLE_ALERTS=True
+      - ENABLE_METRICS=False
     volumes:
       - ~/redfish-mockups/R740xd_iDRAC_7.00.00.174/redfish:/redfish
       - ~/redfish-mockups/ssl:/certs
@@ -240,6 +288,10 @@ services:
       dockerfile: redfish-mockup-server/Dockerfile
     image: redfish-mockup-server:latest
     container_name: redfish-mockup-15g
+    environment: 
+      - LISTENER_DEST=http://192.168.0.30:8080/redfish/events
+      - ENABLE_ALERTS=True
+      - ENABLE_METRICS=False
     volumes:
       - ~/redfish-mockups/R750_iDRAC_7.20.60.50/redfish:/redfish
       - ~/redfish-mockups/ssl:/certs
@@ -255,6 +307,10 @@ services:
       dockerfile: redfish-mockup-server/Dockerfile
     image: redfish-mockup-server:latest
     container_name: redfish-mockup-16g
+    environment: 
+      - LISTENER_DEST=http://192.168.0.30:8080/redfish/events
+      - ENABLE_ALERTS=True
+      - ENABLE_METRICS=False
     volumes:
       - ~/redfish-mockups/R7615_iDRAC_7.20.80.50/redfish:/redfish
       - ~/redfish-mockups/ssl:/certs
@@ -270,6 +326,10 @@ services:
       dockerfile: redfish-mockup-server/Dockerfile
     image: redfish-mockup-server:latest
     container_name: redfish-mockup-17g
+    environment: 
+      - LISTENER_DEST=http://192.168.0.30:8080/redfish/events
+      - ENABLE_ALERTS=True
+      - ENABLE_METRICS=False
     volumes:
       - ~/redfish-mockups/R670_iDRAC_1.20.60.50/redfish:/redfish
       - ~/redfish-mockups/ssl:/certs

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,8 +23,9 @@ import (
 // --- Structs for Ingestion ---
 
 type RedfishEvent struct {
-	Id     string `json:"Id"`
-	Events []struct {
+	Id      string `json:"Id"`
+	Context string `json:"Context,omitempty"`
+	Events  []struct {
 		EventId   string `json:"EventId"`
 		MessageId string `json:"MessageId"`
 		Severity  string `json:"Severity"`
@@ -46,10 +48,11 @@ type SubscriptionPayload struct {
 }
 
 type Endpoint struct {
-	IP       string
-	Port     int
-	Username string
-	Password string
+	IP          string
+	Port        int
+	Username    string
+	Password    string
+	InventoryID string
 }
 
 const (
@@ -61,7 +64,7 @@ const (
 var RedisURL = "redis://redis:6379"
 var RedisClient *redis.Client
 
-const RedisStream = "redfish_events"
+var RedisStream = "redfish_events"
 
 // Listener destination (what other endpoints will POST to). Can be overridden
 // by setting the LISTENER_DEST env var (e.g. https://host.example.com:8443/redfish/events)
@@ -90,6 +93,11 @@ func main() {
 	// 1. Initialize Redis and start the Worker Pool for ingestion
 	if v := os.Getenv("REDIS_URL"); v != "" {
 		RedisURL = v
+	}
+
+	// Allow overriding the Redis stream name via env var REDIS_STREAM
+	if v := os.Getenv("REDIS_STREAM"); v != "" {
+		RedisStream = v
 	}
 	opts, err := redis.ParseURL(RedisURL)
 	if err != nil {
@@ -153,11 +161,18 @@ func main() {
 // createRedfishSubscription creates a Redfish event subscription on the given endpoint
 // and returns the subscription Id (if available) for later deletion.
 func createRedfishSubscription(ep Endpoint) (string, error) {
+	// Prefer a stable inventory identifier in Context where available (see OpenBMC
+	// Redfish EventService design: https://github.com/openbmc/docs/raw/refs/heads/master/designs/redfish-eventservice.md)
+	ctx := ep.IP
+	if ep.InventoryID != "" {
+		ctx = fmt.Sprintf("inventory:%s", ep.InventoryID)
+	}
+
 	payload := SubscriptionPayload{
 		Destination: ListenerIP,
 		// Subscribe for Alert events (matches the python listener behavior)
 		Types:    []string{"Alert"},
-		Context:  "Go-Ingestor-Fleet",
+		Context:  ctx,
 		Protocol: "Redfish",
 	}
 
@@ -306,7 +321,22 @@ func fetchEndpoints(url string) ([]Endpoint, error) {
 				pass = labels["pass"]
 			}
 
-			out = append(out, Endpoint{IP: host, Port: port, Username: user, Password: pass})
+			// try to extract a stable inventory id from common label keys
+			id := labels["inventory_id"]
+			if id == "" {
+				id = labels["instance_id"]
+			}
+			if id == "" {
+				id = labels["id"]
+			}
+			if id == "" {
+				id = labels["name"]
+			}
+			if id == "" {
+				id = labels["instance"]
+			}
+
+			out = append(out, Endpoint{IP: host, Port: port, Username: user, Password: pass, InventoryID: id})
 		}
 	}
 
@@ -365,8 +395,22 @@ func startListener() {
 		body, _ := io.ReadAll(r.Body)
 		defer r.Body.Close()
 
+		source := r.RemoteAddr
+		var evt RedfishEvent
+		if err := json.Unmarshal(body, &evt); err == nil {
+			if evt.Context != "" {
+				source = evt.Context
+			}
+		}
+		// prefer raw IP (no port) when Context wasn't provided
+		if source == r.RemoteAddr {
+			if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+				source = host
+			}
+		}
+
 		select {
-		case JobQueue <- Job{Payload: body, Source: r.RemoteAddr}:
+		case JobQueue <- Job{Payload: body, Source: source}:
 			w.WriteHeader(http.StatusAccepted)
 		default:
 			http.Error(w, "Queue Full", http.StatusServiceUnavailable)
@@ -405,6 +449,18 @@ func startListener() {
 
 func worker(id int, jobs <-chan Job) {
 	for job := range jobs {
+		// Detect MetricReport payloads by parsing the JSON and checking
+		// the @odata.type field. Skip sending MetricReports to Redis.
+		var top map[string]interface{}
+		if err := json.Unmarshal(job.Payload, &top); err == nil {
+			if t, ok := top["@odata.type"].(string); ok {
+				if strings.Contains(t, "MetricReport") {
+					log.Printf("[Worker %d] Skipping MetricReport from %s (odata.type=%s)", id, job.Source, t)
+					continue
+				}
+			}
+		}
+
 		// Push the raw payload to the Redis stream for downstream processing
 		if RedisClient != nil {
 			vals := map[string]interface{}{
