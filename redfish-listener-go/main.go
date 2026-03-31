@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -48,11 +49,10 @@ type SubscriptionPayload struct {
 }
 
 type Endpoint struct {
-	IP          string
-	Port        int
-	Username    string
-	Password    string
-	InventoryID string
+	Host     string
+	Port     int
+	Username string
+	Password string
 }
 
 const (
@@ -78,6 +78,10 @@ type SubContext struct {
 }
 
 var Subscriptions []SubContext
+
+// RemoteMappings holds mappings from remote connection IP -> inventory hostname/IP
+var RemoteMappings []map[string]string
+var RemoteMapMu sync.Mutex
 
 func main() {
 	JobQueue = make(chan Job, MaxQueue)
@@ -122,7 +126,7 @@ func main() {
 	// In reality, this list comes from your inventory database or MCP gateway
 	invURL := os.Getenv("INVENTORY_URL")
 	if invURL == "" {
-		invURL = "http://inventory:8080/api/v1/targets"
+		invURL = "http://redfishalerts:8080/api/v1/targets"
 	}
 
 	endpoints, err := fetchEndpoints(invURL)
@@ -135,7 +139,7 @@ func main() {
 	for _, ep := range endpoints {
 		unsubID, err := createRedfishSubscription(ep)
 		if err != nil {
-			log.Printf("Subscription failed for %s: %v", ep.IP, err)
+			log.Printf("Subscription failed for %s: %v", ep.Host, err)
 			continue
 		}
 		if unsubID != "" {
@@ -163,10 +167,10 @@ func main() {
 func createRedfishSubscription(ep Endpoint) (string, error) {
 	// Prefer a stable inventory identifier in Context where available (see OpenBMC
 	// Redfish EventService design: https://github.com/openbmc/docs/raw/refs/heads/master/designs/redfish-eventservice.md)
-	ctx := ep.IP
-	if ep.InventoryID != "" {
-		ctx = fmt.Sprintf("inventory:%s", ep.InventoryID)
-	}
+	// Start with the host as the default Context value. Inventory identifiers
+	// were removed from the Endpoint representation; using the host keeps
+	// Context stable and human-readable.
+	ctx := ep.Host
 
 	payload := SubscriptionPayload{
 		Destination: ListenerIP,
@@ -181,9 +185,9 @@ func createRedfishSubscription(ep Endpoint) (string, error) {
 		return "", fmt.Errorf("marshal payload: %w", err)
 	}
 
-	url := fmt.Sprintf("https://%s:%d/redfish/v1/EventService/Subscriptions", ep.IP, ep.Port)
+	url := fmt.Sprintf("https://%s:%d/redfish/v1/EventService/Subscriptions", ep.Host, ep.Port)
 	// Log request details (avoid logging secrets)
-	log.Printf("Creating subscription on %s:%d -> %s (types=%v) url=%s", ep.IP, ep.Port, ListenerIP, payload.Types, url)
+	log.Printf("Creating subscription on %s:%d -> %s (types=%v) url=%s", ep.Host, ep.Port, ListenerIP, payload.Types, url)
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -194,11 +198,29 @@ func createRedfishSubscription(ep Endpoint) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	var remoteAddr string
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		DialContext: func(ctx context.Context, network, address string) (net.Conn, error) {
+			conn, err := dialer.DialContext(ctx, network, address)
+			if err != nil {
+				return nil, err
+			}
+			if conn != nil {
+				ra := conn.RemoteAddr().String()
+				if host, _, err := net.SplitHostPort(ra); err == nil {
+					remoteAddr = host
+				} else {
+					remoteAddr = ra
+				}
+			}
+			return conn, nil
 		},
+	}
+	client := &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: transport,
 	}
 
 	resp, err := client.Do(req)
@@ -214,7 +236,7 @@ func createRedfishSubscription(ep Endpoint) (string, error) {
 		bodyText = bodyText[:500] + "..."
 	}
 
-	log.Printf("Subscription response from %s: status=%d url=%s body=%q", ep.IP, resp.StatusCode, url, bodyText)
+	log.Printf("Subscription response from %s: status=%d url=%s body=%q", ep.Host, resp.StatusCode, url, bodyText)
 
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusNoContent {
 		return "", fmt.Errorf("status %d: %s", resp.StatusCode, bodyText)
@@ -249,7 +271,15 @@ func createRedfishSubscription(ep Endpoint) (string, error) {
 		}
 	}
 
-	log.Printf("Successfully subscribed to %s (id=%s) status=%d url=%s", ep.IP, unsubID, resp.StatusCode, url)
+	log.Printf("Successfully subscribed to %s (id=%s) status=%d url=%s", ep.Host, unsubID, resp.StatusCode, url)
+
+	if remoteAddr != "" {
+		RemoteMapMu.Lock()
+		RemoteMappings = append(RemoteMappings, map[string]string{remoteAddr: ep.Host})
+		RemoteMapMu.Unlock()
+		log.Printf("Recorded remote mapping: %s -> %s", remoteAddr, ep.Host)
+	}
+
 	return unsubID, nil
 }
 
@@ -321,22 +351,7 @@ func fetchEndpoints(url string) ([]Endpoint, error) {
 				pass = labels["pass"]
 			}
 
-			// try to extract a stable inventory id from common label keys
-			id := labels["inventory_id"]
-			if id == "" {
-				id = labels["instance_id"]
-			}
-			if id == "" {
-				id = labels["id"]
-			}
-			if id == "" {
-				id = labels["name"]
-			}
-			if id == "" {
-				id = labels["instance"]
-			}
-
-			out = append(out, Endpoint{IP: host, Port: port, Username: user, Password: pass, InventoryID: id})
+			out = append(out, Endpoint{Host: host, Port: port, Username: user, Password: pass})
 		}
 	}
 
@@ -349,11 +364,11 @@ func cleanSubscriptions() {
 		if s.UnsubID == "" {
 			continue
 		}
-		url := fmt.Sprintf("https://%s:%d/redfish/v1/EventService/Subscriptions/%s", s.EP.IP, s.EP.Port, s.UnsubID)
-		log.Printf("Deleting subscription id=%s on %s:%d", s.UnsubID, s.EP.IP, s.EP.Port)
+		url := fmt.Sprintf("https://%s:%d/redfish/v1/EventService/Subscriptions/%s", s.EP.Host, s.EP.Port, s.UnsubID)
+		log.Printf("Deleting subscription id=%s on %s:%d", s.UnsubID, s.EP.Host, s.EP.Port)
 		req, err := http.NewRequest(http.MethodDelete, url, nil)
 		if err != nil {
-			log.Printf("Failed to create delete request for %s: %v", s.EP.IP, err)
+			log.Printf("Failed to create delete request for %s: %v", s.EP.Host, err)
 			continue
 		}
 		req.SetBasicAuth(s.EP.Username, s.EP.Password)
@@ -365,7 +380,7 @@ func cleanSubscriptions() {
 		}
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Printf("Failed to delete subscription %s on %s: %v", s.UnsubID, s.EP.IP, err)
+			log.Printf("Failed to delete subscription %s on %s: %v", s.UnsubID, s.EP.Host, err)
 			continue
 		}
 		bodyBytes, _ := io.ReadAll(resp.Body)
@@ -374,11 +389,11 @@ func cleanSubscriptions() {
 		if len(bodyText) > 500 {
 			bodyText = bodyText[:500] + "..."
 		}
-		log.Printf("Delete response from %s: status=%d body=%q", s.EP.IP, resp.StatusCode, bodyText)
+		log.Printf("Delete response from %s: status=%d body=%q", s.EP.Host, resp.StatusCode, bodyText)
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			log.Printf("Deleted subscription %s on %s (status=%d)", s.UnsubID, s.EP.IP, resp.StatusCode)
+			log.Printf("Deleted subscription %s on %s (status=%d)", s.UnsubID, s.EP.Host, resp.StatusCode)
 		} else {
-			log.Printf("Failed to delete subscription %s on %s (status=%d)", s.UnsubID, s.EP.IP, resp.StatusCode)
+			log.Printf("Failed to delete subscription %s on %s (status=%d)", s.UnsubID, s.EP.Host, resp.StatusCode)
 		}
 	}
 }
@@ -395,15 +410,54 @@ func startListener() {
 		body, _ := io.ReadAll(r.Body)
 		defer r.Body.Close()
 
-		source := r.RemoteAddr
+		// Resolve the event `source` in a well-defined priority order:
+		//  1) Event `Context` field (preferred and authoritative when present)
+		//  2) Recorded RemoteMappings (mapping of remote connection IP -> inventory host/IP)
+		//  3) RemoteAddr of the incoming HTTP connection (raw IP, prefer no port)
+		// This makes resolution deterministic and ensures stable inventory identifiers
+		// are used when available (Context or mappings), otherwise fall back to
+		// the network source address.
+
+		source := ""
+
+		// 1) Try to set from event Context first. If the event provides a
+		//    Context it should be treated as the authoritative source value.
 		var evt RedfishEvent
 		if err := json.Unmarshal(body, &evt); err == nil {
 			if evt.Context != "" {
 				source = evt.Context
 			}
 		}
-		// prefer raw IP (no port) when Context wasn't provided
-		if source == r.RemoteAddr {
+
+		// 2) If Context was not provided by the event, try recorded RemoteMappings.
+		//    RemoteMappings were recorded at subscription time and map the remote
+		//    connection address (IP or ip:port) to the inventory host/IP. Use the
+		//    mapping only when we don't already have a Context value.
+		if source == "" {
+			RemoteMapMu.Lock()
+			for _, m := range RemoteMappings {
+				// Check for exact match (address with port) first
+				if v, ok := m[r.RemoteAddr]; ok {
+					source = v
+					break
+				}
+				// Also check using only the host portion (strip port) to match how
+				// some mappings may have been stored.
+				if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+					if v, ok := m[host]; ok {
+						source = v
+						break
+					}
+				}
+			}
+			RemoteMapMu.Unlock()
+		}
+
+		// 3) Fallback: if neither Context nor a mapping produced a value,
+		//    use the remote address. Prefer the host (IP) portion without port
+		//    to keep identification consistent.
+		if source == "" {
+			source = r.RemoteAddr
 			if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
 				source = host
 			}

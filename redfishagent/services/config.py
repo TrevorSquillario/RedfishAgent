@@ -28,10 +28,12 @@ class ConfigService:
     available as the `config` attribute (a `ConfigModel`).
     """
 
-    def __init__(self):
+    def __init__(self, config_path: str):
         # Allow overriding the config path via the CONFIG_PATH env var
-        config_path = os.getenv("CONFIG_PATH", "/config/config.yaml")
-        self.path = Path(config_path)
+        if config_path:
+            self.path = Path(config_path)
+        else:
+            self.path = Path(os.getenv("CONFIG_PATH", "/config/config.yaml"))
         self.config = self._load()
 
     def _load(self) -> ConfigModel:

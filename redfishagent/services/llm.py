@@ -3,7 +3,7 @@
 Provides a lightweight `LLMService` that can subscribe to the `alerts`
 Redis stream and log incoming entries for now.
 """
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 import logging
 import time
 import os
@@ -24,7 +24,7 @@ class LLMService:
 		self._running = False
 
 	@staticmethod
-	async def fetch_mcp_tools(config_service: Optional[Any] = None) -> Optional[Any]:
+	async def fetch_mcp_tools(config_service: Optional[Any] = None, mcp_servers: Optional[List] = None) -> Optional[Any]:
 		"""Discover MCP servers and return the currently-available tools.
 
 		This helper mirrors the MCP lookup logic from the graph and returns
@@ -32,22 +32,25 @@ class LLMService:
 		"""
 		# Local import to avoid import cycles at module import time
 		from langchain_mcp_adapters.client import MultiServerMCPClient
-		from graphs.utils.mcp import build_mcp_servers_map
+		from redfishagent.graphs.utils.mcp import build_mcp_servers_map
 
-		# Determine mcp entries from a variety of possible config shapes
-		mcp_entries = None
-		if config_service is not None:
-			if isinstance(config_service, dict):
-				mcp_entries = config_service.get("mcp")
-			elif hasattr(config_service, "get"):
-				try:
-					mcp_entries = config_service.get("mcp")
-				except Exception:
-					mcp_entries = None
-			elif hasattr(config_service, "mcp"):
-				mcp_entries = getattr(config_service, "mcp")
+		if mcp_servers:
+			mcp_entries = mcp_servers
 		else:
-			logger.error(f"Config Service not provided")
+			# Determine mcp entries from a variety of possible config shapes
+			mcp_entries = None
+			if config_service is not None:
+				if isinstance(config_service, dict):
+					mcp_entries = config_service.get("mcp")
+				elif hasattr(config_service, "get"):
+					try:
+						mcp_entries = config_service.get("mcp")
+					except Exception:
+						mcp_entries = None
+				elif hasattr(config_service, "mcp"):
+					mcp_entries = getattr(config_service, "mcp")
+			else:
+				logger.error(f"Config Service not provided")
 
 		servers_map = build_mcp_servers_map(mcp_entries)
 
@@ -156,7 +159,7 @@ class LLMService:
 			logger.exception("Error creating embedding via OpenAI-compatible API")
 			return None
 
-	async def run_agent(self, config_service: Optional[Any] = None) -> None:
+	async def run_agent(self) -> None:
 		"""Run the agent graph defined in `redfishagent.graphs.default`.
 
 		This wraps the graph's `main` runner. It passes this service's `db`
@@ -175,7 +178,7 @@ class LLMService:
 			# config that may have been provided at construction time. Pass
 			# through any pre-fetched `mcp_tools` so the graph doesn't have to
 			# rediscover them itself.
-			cfg = config_service or self.config
+			cfg = self.config
 			try:
 				mcp_tools = await LLMService.fetch_mcp_tools(cfg)
 			except Exception:

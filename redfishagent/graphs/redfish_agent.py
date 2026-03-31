@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-from utils.logging import setup_logger
+from redfishagent.utils.logging import setup_logger
 from typing import Annotated, TypedDict, Optional, Any
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
@@ -16,6 +16,7 @@ from phoenix.otel import register
 class AgentState(TypedDict):
     # 'add_messages' allows the graph to append new messages to the history
     messages: Annotated[list, add_messages]
+    source: str
     alert_id: str
     query_message: str
     context: str  # Store RAG results here
@@ -27,16 +28,16 @@ tracer_provider = register(
 )
 LangChainInstrumentor().instrument(tracer_provider=tracer_provider)
 
-async def main(db_service: Optional[Any] = None, config_service: Optional[Any] = None, mcp_tools: Optional[Any] = None):
+async def main(db_service: Optional[Any] = None, mcp_tools: Optional[Any] = None, inputs: Optional[dict] = None):
     # 2. Setup OpenAI / embeddings configuration from environment
     # Reads these environment variables (defaults used if not set):
     # - `OPENAI_API_BASE` : base URL for a local OpenAI-compatible server
     # - `OPENAI_API_KEY`  : API key (optional)
     # - `OPENAI_MODEL`    : model name (defaults to `text-embedding-3-small`)
-    base = os.getenv('OPENAI_API_BASE', '').rstrip('/')
+    base = os.getenv('OPENAI_API_BASE', 'http://192.168.0.30:8090').rstrip('/')
     openai_api_base = f"{base}/v1" if base else ""
     openai_api_key = os.getenv("OPENAI_API_KEY", "EMPTY")
-    openai_model = os.getenv("OPENAI_MODEL", "text-embedding-3-small")
+    openai_model = os.getenv("OPENAI_MODEL", "nvidia/Nemotron-Cascade-2-30B-A3B")
     # Optional separate embedding endpoint/key
     #embed_api_base = os.getenv("OPENAI_API_BASE_EMBED", openai_api_base)
     #embed_api_key = os.getenv("OPENAI_API_KEY_EMBED", openai_api_key)
@@ -46,15 +47,15 @@ async def main(db_service: Optional[Any] = None, config_service: Optional[Any] =
     # will run without bound tools (safe default).
 
     # 4. Define Graph Nodes
-    async def retrieve_context(state: AgentState):
-        """Perform RAG lookup using alert_id as a filter."""
-        docs = await vector_store.asimilarity_search(
-            state["query_message"], 
-            k=3, 
-            filter={"alert_id": state["alert_id"]}
-        )
-        context_text = "\n".join([d.page_content for d in docs])
-        return {"context": context_text}
+    # async def retrieve_context(state: AgentState):
+    #     """Perform RAG lookup using alert_id as a filter."""
+    #     docs = await vector_store.asimilarity_search(
+    #         state["query_message"], 
+    #         k=3, 
+    #         filter={"alert_id": state["alert_id"]}
+    #     )
+    #     context_text = "\n".join([d.page_content for d in docs])
+    #     return {"context": context_text}
 
     async def call_model(state: AgentState):
         """The LLM deciding whether to use the dynamic MCP tools."""
@@ -66,14 +67,17 @@ async def main(db_service: Optional[Any] = None, config_service: Optional[Any] =
         messages = [{"role": "system", "content": system_msg}] + state.get("messages", [])
 
         response = await llm.ainvoke(messages)
-        return {"messages": [response]}
+        # Ensure the `source` property is present in the state returned by this node.
+        # Preserve an existing value or set a sensible default.
+        source_value = state.get("source", "redfish_agent")
+        return {"messages": [response], "source": source_value}
 
     # 5. Build the Graph
     workflow = StateGraph(AgentState)
 
     #workflow.add_node("retriever", retrieve_context)
     workflow.add_node("agent", call_model)
-    #workflow.add_node("tools", ToolNode(mcp_tools))
+    workflow.add_node("tools", ToolNode(mcp_tools))
 
     workflow.add_edge(START, "agent")
     #workflow.add_edge(START, "retriever")
@@ -81,21 +85,26 @@ async def main(db_service: Optional[Any] = None, config_service: Optional[Any] =
 
     # Conditional logic: If LLM calls a tool, go to 'tools' node, else END
     def should_continue(state: AgentState):
-        if state["messages"][-1].tool_calls:
+        # Safely detect whether the last message requested tool calls.
+        msgs = state.get("messages") or []
+        last_msg = msgs[-1] if msgs else None
+        if last_msg is not None and getattr(last_msg, "tool_calls", None):
             return "tools"
         return END
 
     workflow.add_conditional_edges("agent", should_continue)
-    #workflow.add_edge("tools", "agent")
+    workflow.add_edge("tools", "agent")
 
     app = workflow.compile()
 
     # 6. Run it
-    inputs = {
-        "messages": [("user", "Check the logs for this alert.")],
-        "alert_id": "ALT-9901",
-        "query_message": "Critical failure in database connection"
-    }
+    if inputs is None:
+        inputs = {
+            "messages": [("user", "Check the logs for this alert.")],
+            "source": "redfish_agent",
+            "alert_id": "ALT-9901",
+            "query_message": "Critical failure in database connection"
+        }
 
     async for chunk in app.astream(inputs):
         print(chunk)

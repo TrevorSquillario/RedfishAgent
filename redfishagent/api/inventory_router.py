@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 from utils.logging import setup_logger
 from app import RedfishAgentApp
 from utils.api import handle_api_exception
+from services.inventory import InventoryService
 
 logger = setup_logger("api")
 
@@ -33,12 +34,40 @@ def get_targets(redfishagent: RedfishAgentApp = Depends(get_app)) -> List[Dict[s
 	try:
 		logger.info("Handling /api/inventory/targets request")
 
-		# Use pre-loaded inventory loader when available
+		# Prefer the shared InventoryService when available
+		service = getattr(redfishagent, "inventory_service", None)
+		if service is not None:
+			return service.run_inventory() or []
+
+		# Fallback to the raw loader if service unavailable
 		loader = getattr(redfishagent, "inventory_loader", None)
 		if loader is None:
 			return []
 
 		return loader.run_inventory() or []
+
+	except Exception as e:
+		handle_api_exception(e)
+
+
+@router.get("/list")
+def get_list(redfishagent: RedfishAgentApp = Depends(get_app)) -> List[Dict[str, Any]]:
+	"""Return inventory plugin results without adding the exporter URL."""
+	try:
+		logger.info("Handling /api/inventory/list request")
+
+		# Use the app-level InventoryService when available
+		service = getattr(redfishagent, "inventory_service", None)
+		if service is not None:
+			return service.run_inventory(add_exporter_url=False) or []
+
+		# Fall back: create a temporary InventoryService bound to the app loader
+		loader = getattr(redfishagent, "inventory_loader", None)
+		if loader is not None:
+			tmp = InventoryService(plugin_loader=loader)
+			return tmp.run_inventory(add_exporter_url=False) or []
+
+		return []
 
 	except Exception as e:
 		handle_api_exception(e)

@@ -89,7 +89,7 @@ services:
       #- LISTENER_KEY=/certs/server.key
       - REDIS_URL=redis://redis:6379
       - REDIS_STREAM=redfish_alerts
-      - INVENTORY_URL=http://redfishagent:8080/api/v1/targets
+      - INVENTORY_URL=http://redfishagent:8000/api/inventory/list
     # command: ["python", "src/redfish_listener.py", "-c", "src/config.ini"]
     depends_on:
       redis:
@@ -126,6 +126,7 @@ services:
     restart: unless-stopped
     environment:
       PYTHONUNBUFFERED: "1"
+      LOG_LEVEL: DEBUG
     volumes:
       - ./idrac-redfish-mcp/src:/app
       - ./idrac-redfish-mcp/redfish-dell:/app/redfish-dell
@@ -133,7 +134,7 @@ services:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 1s
       timeout: 1s
-      retries: 1
+      retries: 25
       start_period: 0s
     ports:
       - "8092:8080"
@@ -270,10 +271,11 @@ services:
     image: redfish-mockup-server:latest
     container_name: redfish-mockup-14g
     environment: 
-      - LISTENER_DEST=http://192.168.0.30:8080/redfish/events
+      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
       - ENABLE_ALERTS=True
       - ENABLE_METRICS=False
     volumes:
+      - ./redfish-mockup-server/src:/app:cached
       - ~/redfish-mockups/R740xd_iDRAC_7.00.00.174/redfish:/redfish
       - ~/redfish-mockups/ssl:/certs
     healthcheck:
@@ -289,10 +291,11 @@ services:
     image: redfish-mockup-server:latest
     container_name: redfish-mockup-15g
     environment: 
-      - LISTENER_DEST=http://192.168.0.30:8080/redfish/events
+      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
       - ENABLE_ALERTS=True
       - ENABLE_METRICS=False
     volumes:
+      - ./redfish-mockup-server/src:/app:cached
       - ~/redfish-mockups/R750_iDRAC_7.20.60.50/redfish:/redfish
       - ~/redfish-mockups/ssl:/certs
     healthcheck:
@@ -308,10 +311,11 @@ services:
     image: redfish-mockup-server:latest
     container_name: redfish-mockup-16g
     environment: 
-      - LISTENER_DEST=http://192.168.0.30:8080/redfish/events
+      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
       - ENABLE_ALERTS=True
       - ENABLE_METRICS=False
     volumes:
+      - ./redfish-mockup-server/src:/app:cached
       - ~/redfish-mockups/R7615_iDRAC_7.20.80.50/redfish:/redfish
       - ~/redfish-mockups/ssl:/certs
     healthcheck:
@@ -327,10 +331,11 @@ services:
     image: redfish-mockup-server:latest
     container_name: redfish-mockup-17g
     environment: 
-      - LISTENER_DEST=http://192.168.0.30:8080/redfish/events
+      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
       - ENABLE_ALERTS=True
       - ENABLE_METRICS=False
     volumes:
+      - ./redfish-mockup-server/src:/app:cached
       - ~/redfish-mockups/R670_iDRAC_1.20.60.50/redfish:/redfish
       - ~/redfish-mockups/ssl:/certs
     #environment:

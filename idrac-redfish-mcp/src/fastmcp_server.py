@@ -13,6 +13,32 @@ logger = logging.getLogger("idrac_redfish_mcp")
 
 mcp = FastMCP("iDRAC Redfish MCP")
 
+
+def debug_log_params(func_name: str, params: Dict[str, Any], mask_fields: Optional[List[str]] = None) -> None:
+    """
+    Log parameters at debug level while redacting sensitive fields.
+
+    - func_name: short name to include in the log line
+    - params: dictionary of parameter names -> values
+    - mask_fields: list of keys (case-insensitive) to redact; defaults to common password keys
+    """
+    if mask_fields is None:
+        mask_fields = ["password", "pass", "pwd"]
+
+    safe: Dict[str, Any] = {}
+    mask_set = {m.lower() for m in mask_fields}
+    for k, v in params.items():
+        if k.lower() in mask_set:
+            safe[k] = "***REDACTED***"
+        else:
+            safe[k] = v
+
+    # Try to render as JSON for compactness; fall back to plain repr on failure
+    try:
+        logger.debug("%s params: %s", func_name, json.dumps(safe, default=str))
+    except Exception:
+        logger.debug("%s params (safe): %r", func_name, safe)
+
 def _get_url(host: str, port: int):
     if port and port != 443:
         base_url = f"https://{host}:{port}"
@@ -54,6 +80,19 @@ def get_lc_logs(
         raise ValueError("missing 'host' in params")
 
     url = _get_url(host=host, port=port)
+    # Debug-log the incoming parameters, redact sensitive fields (password).
+    debug_log_params("get_lc_logs", {
+        "host": host,
+        "port": port,
+        "verify": verify,
+        "username": username,
+        "password": password,
+        "start_date": start_date,
+        "end_date": end_date,
+        "severity": severity,
+        "top": top,
+        "skip": skip,
+    })
 
     client = DellRedfishClient(base_url=url, username=username, password=password)
     logs = client.get_lifecycle_logs(

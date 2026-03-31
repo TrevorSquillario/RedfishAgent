@@ -9,6 +9,7 @@ from services.config import ConfigService
 from services.plugin_loader import PluginLoader
 from services.redis import RedisService
 from services.webhook import WebhookService
+from services.inventory import InventoryService
 from services.llm import LLMService
 from services.database import init_database
 import os
@@ -101,6 +102,14 @@ class RedfishAgentApp:
             self.inventory_loader.plugins = {k: v for k, v in self.inventory_loader.plugins.items() if k in inventory_spec}
         if output_spec:
             self.output_loader.plugins = {k: v for k, v in self.output_loader.plugins.items() if k in output_spec}
+
+        # Create a shared InventoryService that uses the existing PluginLoader
+        try:
+            self.inventory_service = InventoryService(plugin_loader=self.inventory_loader, context=context)
+            self.logger.info("InventoryService initialized and attached to app")
+        except Exception as e:
+            self.logger.warning(f"Could not initialize InventoryService: {e}")
+            self.inventory_service = None
 
         # Initialize RedisService and WebhookService
         try:

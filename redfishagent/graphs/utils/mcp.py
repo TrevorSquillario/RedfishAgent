@@ -1,5 +1,5 @@
 from typing import Annotated, TypedDict, Optional, Any
-from utils.logging import setup_logger
+from redfishagent.utils.logging import setup_logger
 import os
 from urllib.parse import urlparse
 

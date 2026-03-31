@@ -26,6 +26,8 @@ app = FastAPI()
 
 # In-memory subscription store for created subscriptions
 SUBSCRIPTIONS = {}
+# In-memory session store for created sessions
+SESSIONS = {}
 
 # async def simple_generator():
 #     for i in range(100):
@@ -207,6 +209,38 @@ async def delete_subscription(sub_id: str):
         return JSONResponse(status_code=204, content=None)
     return JSONResponse(status_code=404, content={"error": "subscription not found"})
 
+
+# Session creation endpoint
+@app.post('/redfish/v1/SessionService/Sessions')
+async def create_session(request: Request):
+    """Create a new Redfish session and return session object + auth token."""
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    # Determine username from payload if provided, otherwise fallback
+    username = payload.get('UserName') or payload.get('Username') or payload.get('user') or 'user'
+
+    # Use a simple numeric id so test-friendly values like "1" appear
+    session_id = str(len(SESSIONS) + 1)
+    token = uuid.uuid4().hex
+
+    SESSIONS[session_id] = {"UserName": username, "Token": token}
+
+    body = {
+        "@odata.type": "#Session.v1_1_2.Session",
+        "@odata.id": f"/redfish/v1/SessionService/Sessions/{session_id}",
+        "Id": session_id,
+        "Name": "User Session",
+        "Description": "Manager User Session",
+        "UserName": username,
+        "Oem": {},
+    }
+
+    headers = {"Location": f"/redfish/v1/SessionService/Sessions/{session_id}", "X-Auth-Token": token}
+    return JSONResponse(content=body, status_code=201, headers=headers)
+
 # Dynamic endpoint: map incoming /redfish/... URI to a local index.json file under /app
 @app.api_route('/redfish/{full_path:path}', methods=["GET", "HEAD"])
 def redfish_dynamic(request: Request, full_path: str):
@@ -303,7 +337,18 @@ async def startup_event_sender():
                     logger.error(f"Failed to post metric to {listener_url}: {e}")
                 await asyncio.sleep(15)
 
-    if enable_metrics:
+    if enable_metrics: 
         asyncio.create_task(metric_sender())
     else:
         logger.info('Background metric sender disabled via ENABLE_METRICS')
+
+
+# 
+# Main
+#
+if __name__ == "__main__":
+    import uvicorn
+    #import openlit
+    #openlit.init()
+    #uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.dev(app, host="0.0.0.0", port=443)

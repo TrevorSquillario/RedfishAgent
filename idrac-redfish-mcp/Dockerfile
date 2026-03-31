@@ -31,5 +31,5 @@ USER app
 
 EXPOSE 8080
 
-CMD ["python", "fastmcp_server.py"]
+CMD ["fastmcp", "run", "fastmcp_server.py", "--reload", "--transport", "http", "--host", "0.0.0.0", "--port", "8080"]
 

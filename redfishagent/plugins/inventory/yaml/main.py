@@ -108,13 +108,12 @@ class YamlInventoryPlugin(InventoryPluginInterface):
         if t.startswith("http://") or t.startswith("https://"):
             return t
 
-        # strip optional port from host:port form
+        # For non-HTTP targets return the host portion only (no exporter prefix).
+        # The caller (InventoryService) is responsible for adding the exporter
+        # URL if desired.
         host = t.split(":")[0]
-
-        base = self.redfish_exporter_url.rstrip("/")
-        formatted = f"{base}/metrics?target={host}"
-        logger.debug("Formatted target '%s' -> '%s'", target, formatted)
-        return formatted
+        logger.debug("Formatted target '%s' -> '%s'", target, host)
+        return host
 
 
     def ensure_list_of_str(self, value: Any) -> List[str]:

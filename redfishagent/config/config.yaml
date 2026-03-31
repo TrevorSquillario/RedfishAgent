@@ -4,4 +4,4 @@ plugins:
   output:
 mcp:
   - http://idrac-redfish-mcp:8080/mcp
-  - file:///app/mcp/prometheus.py
+  - file:///app/mcp_servers/prometheus.py
