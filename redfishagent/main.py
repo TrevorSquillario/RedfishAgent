@@ -14,20 +14,21 @@ from datetime import date, datetime
 
 from utils.api import handle_api_exception  
 from api.inventory_router import router as inventory_router
-from api.webhook_router import router as webhook_router
 from api.llm_router import router as llm_router
 
- # Initialize the app
-redfishagent_app = RedfishAgentApp()
-
+# Create the FastAPI app first so it can be passed into RedfishAgentApp
+# (trigger plugins need it to register routes at initialisation time)
 app = FastAPI(
     title="RedfishAgent API",
     description="API for content generation",
     version="1.0.0"
 )
 
+# Initialize the core app, passing the FastAPI instance so trigger plugins
+# that register endpoints (e.g. webhook_prometheus) can call app.include_router
+redfishagent_app = RedfishAgentApp(fastapi_app=app)
+
 app.include_router(inventory_router)
-app.include_router(webhook_router)
 app.include_router(llm_router)
 
 # Add CORS middleware to allow cross-origin requests
@@ -54,7 +55,5 @@ def healthz():
 #
 if __name__ == "__main__":
     import uvicorn
-    #import openlit
-    #openlit.init()
     #uvicorn.run(app, host="0.0.0.0", port=8000)
     uvicorn.dev(app, host="0.0.0.0", port=8000)

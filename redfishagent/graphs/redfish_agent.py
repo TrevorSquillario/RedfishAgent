@@ -13,7 +13,7 @@ from openinference.instrumentation.langchain import LangChainInstrumentor
 from phoenix.otel import register
 
 from utils.logging import setup_logger
-from models.app import RedfishLogEntry, ConfigModel, PluginsConfig
+from models.app import LogEntry, ConfigModel, PluginsConfig
 
 # `mcp_tools` are expected to be supplied by the caller (e.g. via LLMService.run_agent)
 
@@ -35,7 +35,7 @@ tracer_provider = register(
 )
 LangChainInstrumentor().instrument(tracer_provider=tracer_provider)
 
-async def main(log_entry: RedfishLogEntry, config: ConfigModel, db_service: Optional[Any] = None, mcp_tools: Optional[Any] = None) -> dict:
+async def main(log_entry: LogEntry, config: ConfigModel, db_service: Optional[Any] = None, mcp_tools: Optional[Any] = None) -> dict:
     # Setup OpenAI configuration from environment
     base = os.getenv('OPENAI_API_BASE', 'http://192.168.0.30:8090').rstrip('/')
     openai_api_base = f"{base}/v1" if base else ""

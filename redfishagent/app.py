@@ -1,14 +1,15 @@
-from typing import Optional, List, Any
+from typing import Optional, List, Any, TYPE_CHECKING
 from utils.logging import setup_logger
 
 import os
 from pathlib import Path
 
+if TYPE_CHECKING:
+    from fastapi import FastAPI
+
 # local services
 from services.config import ConfigService
 from services.plugin_loader import PluginLoader
-from services.redis import RedisService
-from services.webhook import WebhookService
 from services.inventory import InventoryService
 from services.llm import LLMService
 from services.output import OutputService
@@ -18,17 +19,19 @@ import os
 class RedfishAgentApp:
     _instance = None
     
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super(RedfishAgentApp, cls).__new__(cls)
             # Initialize the singleton instance
             cls._instance._initialized = False
         return cls._instance
     
-    def __init__(self):
+    
+    def __init__(self, fastapi_app: Optional["FastAPI"] = None):
         """Initialize the RedfishAgentApp with required services (only once)"""
         if self._initialized:
             return
+        self.fastapi_app = fastapi_app
         # initialize logger
         self.logger = setup_logger("app")
 
@@ -60,13 +63,16 @@ class RedfishAgentApp:
         # Determine plugin names requested in config (if available)
         inventory_spec = []
         output_spec = []
+        trigger_spec = []
         if config_model and getattr(config_model, "plugins", None):
             inventory_spec = list(getattr(config_model.plugins, "inventory", []) or [])
             output_spec = list(getattr(config_model.plugins, "output", []) or [])
+            trigger_spec = list(getattr(config_model.plugins, "trigger", []) or [])
 
-        # Initialize plugin loaders for inventory and output packages
+        # Initialize plugin loaders for inventory, output and trigger packages
         self.inventory_loader = PluginLoader("plugins.inventory")
         self.output_loader = PluginLoader("plugins.output")
+        self.trigger_loader = PluginLoader("plugins.trigger")
 
         # Ensure plugin loader modules use our logger (they expect a `logger` symbol)
         try:
@@ -85,18 +91,20 @@ class RedfishAgentApp:
             self.db_manager = None
 
         # Context passed to plugins during initialization
-        context = {"config": config_model, "logger": self.logger, "app": self, "db": self.db_manager}
+        context = {"config": config_model, "logger": self.logger, "app": self, "db": self.db_manager, "fastapi_app": self.fastapi_app}
 
         # Discover and initialize plugins
         try:
-            self.inventory_loader.load_plugins(context=context)
+            self.inventory_loader.load_plugins(context=context, allowed_plugins=inventory_spec if inventory_spec else None)
         except Exception as e:
             self.logger.error(f"Failed loading inventory plugins: {e}")
 
         try:
-            self.output_loader.load_plugins(context=context)
+            self.output_loader.load_plugins(context=context, allowed_plugins=output_spec if output_spec else None)
         except Exception as e:
             self.logger.error(f"Failed loading output plugins: {e}")
+
+        # Trigger plugins are loaded after LLMService is ready (see below)
 
         # If config specified explicit plugin lists, filter loaded plugins
         if inventory_spec:
@@ -120,60 +128,43 @@ class RedfishAgentApp:
             self.logger.warning(f"Could not initialize OutputService: {e}")
             self.output_service = None
 
-        # Initialize RedisService and WebhookService
-        try:
-            redis_host = os.getenv("REDIS_HOST", "redis")
-            redis_port = int(os.getenv("REDIS_PORT", "6379"))
-            redis_db = int(os.getenv("REDIS_DB", "0"))
-            redis_password = os.getenv("REDIS_PASSWORD", None)
-
-            self.redis_service = RedisService(host=redis_host, port=redis_port, db=redis_db, password=redis_password)
-            self.logger.info("RedisService initialized (%s:%s db=%s)", redis_host, redis_port, redis_db)
-        except Exception as e:
-            self.logger.warning(f"Could not initialize RedisService: {e}")
-            self.redis_service = None
-
-        try:
-            self.webhook_service = WebhookService(self.redis_service)
-            self.logger.info("WebhookService initialized")
-        except Exception as e:
-            self.logger.warning(f"Could not initialize WebhookService: {e}")
-            self.webhook_service = None
-
-        # Initialize LLMService and start background listener for alerts
+        # Initialize LLMService
         try:
             # pass the parsed config model (not the service instance)
-            self.llm_service = LLMService(redis_service=self.redis_service, db_service=self.db_manager, config=config_model, inventory_service=self.inventory_service, output_service=self.output_service)
+            self.llm_service = LLMService(db_service=self.db_manager, config=config_model, inventory_service=self.inventory_service, output_service=self.output_service)
             self.logger.info("LLMService initialized")
-            try:
-                import threading
-                import asyncio
-
-                def _start_llm_listener():
-                    loop = asyncio.new_event_loop()
-                    # keep a reference so other threads can interact if needed
-                    self._llm_listener_loop = loop
-                    asyncio.set_event_loop(loop)
-                    try:
-                        loop.run_until_complete(self.llm_service.subscribe_to_alerts(start_id="$"))
-                    finally:
-                        try:
-                            loop.run_until_complete(loop.shutdown_asyncgens())
-                        except Exception:
-                            pass
-                        loop.close()
-                        self._llm_listener_loop = None
-
-                listener = threading.Thread(target=_start_llm_listener, daemon=True)
-                # keep the thread reference for possible future joins
-                self._llm_listener_thread = listener
-                listener.start()
-                self.logger.info("LLMService subscribe_to_alerts started in background")
-            except Exception:
-                self.logger.exception("Failed to start LLMService listener thread")
         except Exception as e:
             self.logger.warning(f"Could not initialize LLMService: {e}")
             self.llm_service = None
+
+        # Load and start trigger plugins (requires llm_service to be ready)
+        try:
+            trigger_context = {**context, "llm_service": self.llm_service, "fastapi_app": self.fastapi_app}
+            self.trigger_loader.load_plugins(context=trigger_context, allowed_plugins=trigger_spec if trigger_spec else None)
+            # Log loaded trigger plugins for visibility (like inventory/output)
+            try:
+                self.logger.info("Trigger plugins loaded: %s", list(self.trigger_loader.plugins.keys()))
+            except Exception:
+                self.logger.exception("Failed to log trigger plugins list")
+            if trigger_spec:
+                self.trigger_loader.plugins = {k: v for k, v in self.trigger_loader.plugins.items() if k in trigger_spec}
+                try:
+                    self.logger.info("Trigger plugins after filtering: %s", list(self.trigger_loader.plugins.keys()))
+                except Exception:
+                    self.logger.exception("Failed to log filtered trigger plugins list")
+
+            # Delegate starting triggers to the PluginLoader helper which
+            # creates background threads and returns them.
+            try:
+                self._trigger_threads = self.trigger_loader.run_trigger()
+                try:
+                    self.logger.info("Started %d trigger threads", len(self._trigger_threads) if getattr(self, "_trigger_threads", None) else 0)
+                except Exception:
+                    self.logger.exception("Failed to log trigger threads start")
+            except Exception:
+                self.logger.exception("Failed to start trigger plugins via PluginLoader.run_trigger")
+        except Exception:
+            self.logger.exception("Failed to load/start trigger plugins")
 
         self._initialized = True
 

@@ -1,6 +1,8 @@
 plugins:
   inventory:
     - yaml
+  trigger:
+    - redis_redfish_listener_go
   output:
     - slack
 mcp_servers:

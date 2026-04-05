@@ -1,30 +1,20 @@
-"""LLM-related services.
-
-Provides a lightweight `LLMService` that can subscribe to the `alerts`
-Redis stream and log incoming entries for now.
-"""
+"""LLM-related services."""
 from typing import Any, Dict, Optional, List
 import logging
-import time
 import os
-import re
 import json
-from urllib.parse import urlparse, parse_qs
 
 import openai
 
-from models.app import RedfishLogEntry, ConfigModel, PluginsConfig
-from .redis import RedisService
+from models.app import LogEntry, ConfigModel, PluginsConfig
 from .inventory import InventoryService
 
 logger = logging.getLogger(__name__)
 
 class LLMService:
-	def __init__(self, redis_service: RedisService, config: ConfigModel, db_service: Optional[Any] = None, inventory_service: Optional[InventoryService] = None, output_service: Optional[Any] = None):
-		self.redis = redis_service
+	def __init__(self, config: ConfigModel, db_service: Optional[Any] = None, inventory_service: Optional[InventoryService] = None, output_service: Optional[Any] = None):
 		self.db = db_service
 		self.config = config
-		self._running = False
 		self.inventory = inventory_service
 		self.output = output_service
 
@@ -78,110 +68,6 @@ class LLMService:
 			logger.exception("Failed to fetch MCP tools")
 			return None
 
-	async def subscribe_to_alerts(self, stream_name: Optional[str] = None, start_id: str = "0-0", block_ms: int = 1000) -> None: 
-		"""Listen to the configured Redis stream and log incoming entries.
-
-		If `stream_name` is not provided, the environment variable
-		`REDIS_STREAM` is used. If that is not set, the default
-		`redfish_events` is used to match the Go ingestor output.
-
-		This method blocks; call it in a background thread/process if you want
-		non-blocking behaviour. It uses the underlying Redis client via
-		`RedisService._client` to perform `xread` calls.
-		"""
-		# determine stream name: prefer explicit arg, then env REDIS_STREAM,
-		# then fall back to the hardcoded default used by the Go ingestor.
-		stream_name = stream_name or os.getenv("REDIS_STREAM", "redfish_events")
-
-		last_id = start_id
-		client = getattr(self.redis, "_client", None)
-		if client is None:
-			logger.error("Redis client not available on RedisService")
-			return
-
-		self._running = True
-		try:
-			while self._running:
-				try:
-					results = client.xread({stream_name: last_id}, block=block_ms, count=10)
-					if not results:
-						continue
-					for stream_name, entries in results:
-						for entry_id, fields in entries:
-							# Extract payload and source from the stream entry; handle bytes keys/values
-							def _get_field(key: str):
-								if key in fields:
-									return fields[key]
-								bkey = key.encode()
-								if bkey in fields:
-									return fields[bkey]
-								return None
-
-							raw_payload = _get_field("payload")
-							raw_source = _get_field("source")
-
-							# Normalize to strings
-							try:
-								payload_str = raw_payload.decode("utf-8") if isinstance(raw_payload, (bytes, bytearray)) else str(raw_payload)
-							except Exception:
-								payload_str = ""
-							try:
-								source = raw_source.decode("utf-8") if isinstance(raw_source, (bytes, bytearray)) else str(raw_source)
-							except Exception:
-								source = ""
-
-							# Parse payload JSON when possible
-							payload_obj: Dict[str, Any]
-							try:
-								payload_obj = json.loads(payload_str) if payload_str else {}
-							except Exception:
-								logger.exception("Failed to parse payload JSON for entry %s", entry_id)
-								payload_obj = {"raw": payload_str}
-
-							# Lookup labels from inventory for this source
-							labels: Dict[str, Any] = {}
-							try:
-								inv = self.inventory.get_inventory()
-								logger.debug(f"Inventory: {inv}")
-								# Find matching inventory entry by comparing source against targets
-								for inv_entry in inv:
-									targets = inv_entry.get("targets", []) or []
-									for t in targets:
-										ts = str(t)
-										match_name = ts.split(":")[0]
-										logger.debug(f"Searching for labels on {match_name}")
-										if match_name and match_name == source:
-											labels = inv_entry.get("labels", {}) or {}
-											logger.debug(f"Labels found: {labels}")
-											break
-									if labels:
-										break
-							except Exception:
-								logger.exception("Failed looking up inventory labels for source %s", source)
-
-							entry_obj = RedfishLogEntry(source=source, payload=payload_obj, labels=labels)
-							logger.info("RedfishLogEntry %s -> %s", entry_id, entry_obj)
-							last_id = entry_id
-							try:
-								await self.run_agent(log_entry=entry_obj)
-								# Delete the processed message from the Redis stream
-								try:
-									client.xdel(stream_name, entry_id)
-									logger.debug("Deleted stream entry %s from %s", entry_id, stream_name)
-								except Exception:
-									logger.exception("Failed to delete stream entry %s from %s", entry_id, stream_name)
-							except Exception:
-								logger.exception("Error while running agent for entry %s", entry_id)
-				except Exception:
-					logger.exception("Error reading from Redis stream %s", stream_name)
-					time.sleep(1)
-		finally:
-			self._running = False
-
-	def stop(self) -> None:
-		"""Stop the subscribe loop started by `subscribe_to_alerts`."""
-		self._running = False
-
 	def create_embedding(self, text: str) -> Optional[list[float]]:
 		"""Create an embedding for `text` using an OpenAI-compatible API.
 
@@ -209,7 +95,7 @@ class LLMService:
 			logger.exception("Error creating embedding via OpenAI-compatible API")
 			return None
 
-	async def run_agent(self, log_entry: Optional[RedfishLogEntry] = None) -> None:
+	async def run_agent(self, log_entry: Optional[LogEntry] = None) -> None:
 		"""Run the agent graph defined in `graphs.default`.
 
 		This wraps the graph's `main` runner. It passes this service's `db`

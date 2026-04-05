@@ -18,31 +18,7 @@ class PluginLoader:
         self.plugin_package = plugin_package
         self.plugins: Dict[str, Any] = {}
 
-    def ensure_plugin_deps(self, plugin_dir: str):
-        """Install plugin requirements into the current Python environment.
-
-        Reads `requirements.txt` from `plugin_dir` and runs
-        `python -m pip install -r requirements.txt`. This does not create any
-        extra directories or modify `sys.path`.
-        """
-        req = os.path.join(plugin_dir, "requirements.txt")
-        if not os.path.isfile(req):
-            return
-
-        try:
-            with open(req, "rb") as f:
-                _ = f.read()
-        except Exception as e:
-            logger.error(f"Could not read requirements for plugin at {plugin_dir}: {e}")
-            return
-
-        logger.info(f"Installing plugin deps from {req} into current environment")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", req])
-        except Exception as e:
-            logger.error(f"Failed to install plugin deps for {plugin_dir}: {e}")
-
-    def load_plugins(self, context: Optional[Dict[str, Any]] = None):
+    def load_plugins(self, context: Optional[Dict[str, Any]] = None, allowed_plugins: Optional[List[str]] = None):
         """
         Discovers and imports plugins from the specified package.
         Accepts an optional 'context' dictionary for dependency injection.
@@ -70,8 +46,17 @@ class PluginLoader:
         except Exception:
             OutputPluginInterface = None
 
+        try:
+            from base.trigger_plugin_base import TriggerPluginInterface
+        except Exception:
+            TriggerPluginInterface = None
+
         # Iterate through subdirectories (submodules)
         for loader, module_name, is_pkg in pkgutil.iter_modules(pkg.__path__):
+            # If caller provided an allow-list, skip modules not in it
+            if allowed_plugins is not None and module_name not in allowed_plugins:
+                logger.debug("Skipping plugin '%s' because it's not in allowed list", module_name)
+                continue
             if is_pkg:
                 full_module_name = f"{self.plugin_package}.{module_name}"
                 
@@ -112,13 +97,15 @@ class PluginLoader:
                     is_candidate = False
 
                     # If class declares a plugin_type attribute, accept it
-                    if getattr(obj, "plugin_type", None) in ("inventory", "output"):
+                    if getattr(obj, "plugin_type", None) in ("inventory", "output", "trigger"):
                         is_candidate = True
 
                     # If it subclasses one of the known interfaces, accept it
                     if (InventoryPluginInterface is not None and issubclass(obj, InventoryPluginInterface) and obj is not InventoryPluginInterface):
                         is_candidate = True
                     if (OutputPluginInterface is not None and issubclass(obj, OutputPluginInterface) and obj is not OutputPluginInterface):
+                        is_candidate = True
+                    if (TriggerPluginInterface is not None and issubclass(obj, TriggerPluginInterface) and obj is not TriggerPluginInterface):
                         is_candidate = True
 
                     if not is_candidate:
@@ -151,6 +138,30 @@ class PluginLoader:
 
                     except Exception as e:
                         logger.error(f"❌ Failed to initialize plugin '{name}': {e}")
+
+    def ensure_plugin_deps(self, plugin_dir: str):
+        """Install plugin requirements into the current Python environment.
+
+        Reads `requirements.txt` from `plugin_dir` and runs
+        `python -m pip install -r requirements.txt`. This does not create any
+        extra directories or modify `sys.path`.
+        """
+        req = os.path.join(plugin_dir, "requirements.txt")
+        if not os.path.isfile(req):
+            return
+
+        try:
+            with open(req, "rb") as f:
+                _ = f.read()
+        except Exception as e:
+            logger.error(f"Could not read requirements for plugin at {plugin_dir}: {e}")
+            return
+
+        logger.info(f"Installing plugin deps from {req} into current environment")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", req])
+        except Exception as e:
+            logger.error(f"Failed to install plugin deps for {plugin_dir}: {e}")
 
     def get_plugin(self, name: str) -> Optional[Any]:
         return self.plugins.get(name)
@@ -260,3 +271,55 @@ class PluginLoader:
 
         logger.debug(f"Output plugin results: {results}")
         return results
+
+    def run_trigger(self) -> List["threading.Thread"]:
+        """Start all trigger plugins in background threads.
+
+        Detection rules:
+        - If a plugin has attribute `plugin_type == 'trigger'` it will be treated
+          as a trigger plugin.
+        - Otherwise, if the plugin is an instance of `TriggerPluginInterface`
+          (from the project's base), it will be treated as a trigger.
+
+        Returns a list of `threading.Thread` objects for the started triggers.
+        """
+        try:
+            from base.trigger_plugin_base import TriggerPluginInterface
+        except Exception:
+            TriggerPluginInterface = None
+
+        import threading
+        import asyncio
+
+        self._trigger_threads: List[threading.Thread] = []
+
+        for name, plugin in self.plugins.items():
+            is_trigger = False
+            if getattr(plugin, "plugin_type", None) == "trigger":
+                is_trigger = True
+            elif TriggerPluginInterface is not None and isinstance(plugin, TriggerPluginInterface):
+                is_trigger = True
+
+            if not is_trigger:
+                continue
+
+            def _start(p=plugin, n=name):
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(p.run())
+                except Exception:
+                    logger.exception("Trigger plugin '%s' exited with error", n)
+                finally:
+                    try:
+                        loop.run_until_complete(loop.shutdown_asyncgens())
+                    except Exception:
+                        pass
+                    loop.close()
+
+            t = threading.Thread(target=_start, daemon=True, name=f"trigger-{name}")
+            self._trigger_threads.append(t)
+            t.start()
+            logger.info("Trigger plugin '%s' started in background", name)
+
+        return self._trigger_threads
