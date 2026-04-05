@@ -1,16 +1,46 @@
 import importlib
+import importlib.util
+import json
 import pkgutil
 import inspect
+import os
+import sys
+import subprocess
 from typing import Dict, Type, Optional, Any, List
 from utils.logging import setup_logger
 
 # module logger
 logger = setup_logger(__name__)
 
+
 class PluginLoader:
     def __init__(self, plugin_package: str):
         self.plugin_package = plugin_package
         self.plugins: Dict[str, Any] = {}
+
+    def ensure_plugin_deps(self, plugin_dir: str):
+        """Install plugin requirements into the current Python environment.
+
+        Reads `requirements.txt` from `plugin_dir` and runs
+        `python -m pip install -r requirements.txt`. This does not create any
+        extra directories or modify `sys.path`.
+        """
+        req = os.path.join(plugin_dir, "requirements.txt")
+        if not os.path.isfile(req):
+            return
+
+        try:
+            with open(req, "rb") as f:
+                _ = f.read()
+        except Exception as e:
+            logger.error(f"Could not read requirements for plugin at {plugin_dir}: {e}")
+            return
+
+        logger.info(f"Installing plugin deps from {req} into current environment")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", req])
+        except Exception as e:
+            logger.error(f"Failed to install plugin deps for {plugin_dir}: {e}")
 
     def load_plugins(self, context: Optional[Dict[str, Any]] = None):
         """
@@ -31,12 +61,12 @@ class PluginLoader:
         # Try to import the project's base interfaces (do inside method to
         # avoid potential circular imports). If unavailable, fall back to None.
         try:
-            from redfishagent.base.inventory_plugin_base import InventoryPluginInterface
+            from base.inventory_plugin_base import InventoryPluginInterface
         except Exception:
             InventoryPluginInterface = None
 
         try:
-            from redfishagent.base.output_plugin_base import OutputPluginInterface
+            from base.output_plugin_base import OutputPluginInterface
         except Exception:
             OutputPluginInterface = None
 
@@ -45,6 +75,24 @@ class PluginLoader:
             if is_pkg:
                 full_module_name = f"{self.plugin_package}.{module_name}"
                 
+                # Ensure plugin dependencies are installed into an isolated
+                # target directory before importing the module. Use the
+                # package path as a cache location for per-plugin targets.
+                try:
+                    try:
+                        spec = importlib.util.find_spec(full_module_name)
+                        if spec and spec.submodule_search_locations:
+                            plugin_dir = spec.submodule_search_locations[0]
+                        else:
+                            plugin_dir = os.path.join(pkg.__path__[0], module_name)
+                    except Exception:
+                        plugin_dir = os.path.join(pkg.__path__[0], module_name)
+
+                    self.ensure_plugin_deps(plugin_dir)
+                except Exception:
+                    # Non-fatal: proceed to attempt importing the module
+                    pass
+
                 # 1. ERROR HANDLING: Isolate module loading
                 try:
                     module = importlib.import_module(full_module_name)
@@ -107,16 +155,6 @@ class PluginLoader:
     def get_plugin(self, name: str) -> Optional[Any]:
         return self.plugins.get(name)
 
-    def run_all(self):
-        """Executes the run method on all successfully loaded plugins."""
-        for name, plugin in self.plugins.items():
-            # 5. ERROR HANDLING: Don't let one bad run() crash the loop
-            try:
-                logger.info(f"▶️ Running {name}...")
-                plugin.load()
-            except Exception as e:
-                logger.error(f"⚠️ Plugin '{name}' crashed during execution: {e}")
-
     def run_inventory(self) -> List[Dict[str, Any]]:
         """Run all inventory plugins (no input argument).
 
@@ -131,7 +169,7 @@ class PluginLoader:
         results: List[Dict[str, Any]] = []
         # import here to avoid circular imports when module is loaded
         try:
-            from redfishagent.base.inventory_plugin_base import InventoryPluginInterface
+            from base.inventory_plugin_base import InventoryPluginInterface
         except Exception:
             InventoryPluginInterface = None
 
@@ -199,7 +237,7 @@ class PluginLoader:
         """
         results: Dict[str, Any] = {}
         try:
-            from redfishagent.base.output_plugin_base import OutputPluginInterface
+            from base.output_plugin_base import OutputPluginInterface
         except Exception:
             OutputPluginInterface = None
 
@@ -215,13 +253,10 @@ class PluginLoader:
 
             try:
                 logger.info(f"▶️ Running output plugin {name}...")
-                sig = inspect.signature(plugin.send)
-                if len(sig.parameters) == 0:
-                    res = plugin.send()
-                else:
-                    res = plugin.send(input_data)
+                res = plugin.send(input_data)
                 results[name] = {"result": res}
             except Exception as e:
                 results[name] = {"error": str(e)}
 
+        logger.debug(f"Output plugin results: {results}")
         return results

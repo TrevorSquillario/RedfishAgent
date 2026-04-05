@@ -5,6 +5,21 @@ from pathlib import Path
 import pytest
 import asyncio
 
+from mcp_servers.prometheus import mcp_server
+
+@pytest.fixture
+async def main_mcp_client():
+    async with Client(transport=mcp_server) as mcp_client:
+        yield mcp_client
+
+@pytest.fixture
+def mcp_servers() -> list:
+    return [
+        "http://localhost:8092/mcp",
+        "file:///home/trevor/git/RedfishAgent/redfishagent/mcp_servers/prometheus.py",
+    ]
+
+
 @pytest.mark.integration
 @pytest.mark.asyncio
 @pytest.mark.parametrize(

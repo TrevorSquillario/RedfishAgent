@@ -1,0 +1,95 @@
+services:
+  # Redfish mockup servers for different iDRAC versions
+  14g:
+    build:
+      context: .
+      dockerfile: redfish-mockup-server/Dockerfile
+    image: redfish-mockup-server:latest
+    container_name: redfish-mockup-14g
+    environment: 
+      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
+      - ENABLE_ALERTS=True
+      - ENABLE_METRICS=False
+    volumes:
+      - ./redfish-mockup-server/src:/app:cached
+      - ~/redfish-mockups/R740xd_iDRAC_7.00.00.174/redfish:/redfish
+      - ~/redfish-mockups/ssl:/certs
+    healthcheck:
+      disable: true
+    restart: "no"
+    ports:
+      - 8001:443
+    networks:
+      - redfishagent
+
+  15g:
+    build:
+      context: .
+      dockerfile: redfish-mockup-server/Dockerfile
+    image: redfish-mockup-server:latest
+    container_name: redfish-mockup-15g
+    environment: 
+      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
+      - ENABLE_ALERTS=True
+      - ENABLE_METRICS=False
+    volumes:
+      - ./redfish-mockup-server/src:/app:cached
+      - ~/redfish-mockups/R750_iDRAC_7.20.60.50/redfish:/redfish
+      - ~/redfish-mockups/ssl:/certs
+    healthcheck:
+      disable: true
+    restart: "no"
+    ports:
+      - 8002:443
+    networks:
+      - redfishagent
+
+  16g:
+    build:
+      context: .
+      dockerfile: redfish-mockup-server/Dockerfile
+    image: redfish-mockup-server:latest
+    container_name: redfish-mockup-16g
+    environment: 
+      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
+      - ENABLE_ALERTS=True
+      - ENABLE_METRICS=False
+    volumes:
+      - ./redfish-mockup-server/src:/app:cached
+      - ~/redfish-mockups/R7615_iDRAC_7.20.80.50/redfish:/redfish
+      - ~/redfish-mockups/ssl:/certs
+    healthcheck:
+      disable: true
+    restart: "no"
+    ports:
+      - 8003:443
+    networks:
+      - redfishagent
+
+  17g:
+    build:
+      context: .
+      dockerfile: redfish-mockup-server/Dockerfile
+    image: redfish-mockup-server:latest
+    container_name: redfish-mockup-17g
+    environment: 
+      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
+      - ENABLE_ALERTS=True
+      - ENABLE_METRICS=False
+    volumes:
+      - ./redfish-mockup-server/src:/app:cached
+      - ~/redfish-mockups/R670_iDRAC_1.20.60.50/redfish:/redfish
+      - ~/redfish-mockups/ssl:/certs
+    #environment:
+    #  - LOG_LEVEL=DEBUG
+    healthcheck:
+      disable: true
+    restart: "no"
+    ports:
+      - 8004:443
+    networks:
+      - redfishagent
+
+networks:
+  redfishagent:
+    driver: bridge

@@ -1,3 +1,4 @@
+import os
 import json
 import logging
 import textwrap
@@ -14,7 +15,9 @@ mcp_server = FastMCP("VictoriaMetrics MCP")
 
 
 class RedfishMetricTool:
-    def __init__(self, url: str = "http://localhost:8428"):
+    def __init__(self, url: Optional[str] = None):
+        if not url:
+            url = os.getenv("PROMETHEUS_URL", "http://victoriametrics:8428")
         self.api_url = f"{url.rstrip('/')}/api/v1"
 
     async def discover_metrics(self, host: str) -> List[str]:

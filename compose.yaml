@@ -32,6 +32,8 @@ services:
       - ./redfishagent/config/config.yaml:/config/config.yaml:ro
       - ./inventory.yaml:/config/inventory.yaml:ro
       - ./redfishagent:/app:cached
+      - ~/redfishagent/input:/input:ro
+      - ~/.cache/datalab:/root/.cache/datalab # Model cache for marker-pdf
     environment:
       - LOG_LEVEL=DEBUG
       - REDIS_HOST=redis
@@ -47,7 +49,10 @@ services:
       - OPENAI_MODEL=nvidia/Nemotron-Cascade-2-30B-A3B
       # Leave OPENAI_API_KEY unset for local OpenAI-compatible servers like vllm
       - PHOENIX_COLLECTOR_ENDPOINT=http://phoenix:4317
+      - PROMETHEUS_URL=http://victoriametrics:8428
       - REDIS_STREAM=redfish_alerts
+      - SLACK_TOKEN=${SLACK_TOKEN}
+      - SLACK_CHANNEL_ID=${SLACK_CHANNEL_ID}
     networks:
       - redfishagent
     depends_on:
@@ -101,7 +106,8 @@ services:
 
   idrac-exporter:
     #image: ghcr.io/mrlhansen/idrac_exporter:latest
-    image: idrac_exporter:latest
+    #image: idrac_exporter:latest
+    image: idrac_exporter:mr 
     container_name: idrac-exporter
     restart: unless-stopped
     environment:
@@ -263,88 +269,7 @@ services:
     networks:
       - redfishagent
 
-  # Redfish mockup servers for different iDRAC versions
-  14g:
-    build:
-      context: .
-      dockerfile: redfish-mockup-server/Dockerfile
-    image: redfish-mockup-server:latest
-    container_name: redfish-mockup-14g
-    environment: 
-      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
-      - ENABLE_ALERTS=True
-      - ENABLE_METRICS=False
-    volumes:
-      - ./redfish-mockup-server/src:/app:cached
-      - ~/redfish-mockups/R740xd_iDRAC_7.00.00.174/redfish:/redfish
-      - ~/redfish-mockups/ssl:/certs
-    healthcheck:
-      disable: true
-    restart: "no"
-    networks:
-      - redfishagent
 
-  15g:
-    build:
-      context: .
-      dockerfile: redfish-mockup-server/Dockerfile
-    image: redfish-mockup-server:latest
-    container_name: redfish-mockup-15g
-    environment: 
-      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
-      - ENABLE_ALERTS=True
-      - ENABLE_METRICS=False
-    volumes:
-      - ./redfish-mockup-server/src:/app:cached
-      - ~/redfish-mockups/R750_iDRAC_7.20.60.50/redfish:/redfish
-      - ~/redfish-mockups/ssl:/certs
-    healthcheck:
-      disable: true
-    restart: "no"
-    networks:
-      - redfishagent
-
-  16g:
-    build:
-      context: .
-      dockerfile: redfish-mockup-server/Dockerfile
-    image: redfish-mockup-server:latest
-    container_name: redfish-mockup-16g
-    environment: 
-      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
-      - ENABLE_ALERTS=True
-      - ENABLE_METRICS=False
-    volumes:
-      - ./redfish-mockup-server/src:/app:cached
-      - ~/redfish-mockups/R7615_iDRAC_7.20.80.50/redfish:/redfish
-      - ~/redfish-mockups/ssl:/certs
-    healthcheck:
-      disable: true
-    restart: "no"
-    networks:
-      - redfishagent
-
-  17g:
-    build:
-      context: .
-      dockerfile: redfish-mockup-server/Dockerfile
-    image: redfish-mockup-server:latest
-    container_name: redfish-mockup-17g
-    environment: 
-      - LISTENER_DEST=http://redfish-listener:8080/redfish/events
-      - ENABLE_ALERTS=True
-      - ENABLE_METRICS=False
-    volumes:
-      - ./redfish-mockup-server/src:/app:cached
-      - ~/redfish-mockups/R670_iDRAC_1.20.60.50/redfish:/redfish
-      - ~/redfish-mockups/ssl:/certs
-    #environment:
-    #  - LOG_LEVEL=DEBUG
-    healthcheck:
-      disable: true
-    restart: "no"
-    networks:
-      - redfishagent
 
 networks:
   redfishagent:

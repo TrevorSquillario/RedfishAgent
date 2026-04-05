@@ -37,14 +37,7 @@ def get_targets(redfishagent: RedfishAgentApp = Depends(get_app)) -> List[Dict[s
 		# Prefer the shared InventoryService when available
 		service = getattr(redfishagent, "inventory_service", None)
 		if service is not None:
-			return service.run_inventory() or []
-
-		# Fallback to the raw loader if service unavailable
-		loader = getattr(redfishagent, "inventory_loader", None)
-		if loader is None:
-			return []
-
-		return loader.run_inventory() or []
+			return service.get_targets() or []
 
 	except Exception as e:
 		handle_api_exception(e)
@@ -59,13 +52,7 @@ def get_list(redfishagent: RedfishAgentApp = Depends(get_app)) -> List[Dict[str,
 		# Use the app-level InventoryService when available
 		service = getattr(redfishagent, "inventory_service", None)
 		if service is not None:
-			return service.run_inventory(add_exporter_url=False) or []
-
-		# Fall back: create a temporary InventoryService bound to the app loader
-		loader = getattr(redfishagent, "inventory_loader", None)
-		if loader is not None:
-			tmp = InventoryService(plugin_loader=loader)
-			return tmp.run_inventory(add_exporter_url=False) or []
+			return service.get_inventory() or []
 
 		return []
 

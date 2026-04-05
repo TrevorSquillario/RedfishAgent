@@ -4,8 +4,8 @@ import pytest
 from pathlib import Path
 from typing import Any, Dict, Optional, List
 
-from redfishagent.services.llm import LLMService
-from redfishagent.services.config import ConfigService
+from services.llm import LLMService
+from services.config import ConfigService
 
 @pytest.mark.integration
 @pytest.mark.asyncio

@@ -47,6 +47,77 @@ def _get_url(host: str, port: int):
 
     return base_url
 
+
+@mcp.tool
+def get_error_and_event_registry(
+    message_ids: List[str],
+    host: str,
+    port: int = 443,
+    verify: bool = False,
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+) -> str:
+    """
+    Retrieve the iDRAC Message Registry (EEMI) mapping or specific message entries.
+
+    This will first attempt to load the bundled `files/eemi.json` registry shipped
+    with this package. If that file is present and valid, its `Messages` mapping
+    (or the specific entries for `message_ids`) will be returned. If not present
+    or loading fails, the code falls back to querying the target iDRAC via Redfish.
+
+    Args:
+        message_ids: List of message ID strings to retrieve (e.g. ['CPU0001']).
+        host: The IP address or hostname of the iDRAC.
+        port: Optional HTTPS port for the Redfish API (default 443).
+        verify: Optional Whether to verify SSL certificates when contacting iDRAC.
+        username: Optional iDRAC username for basic authentication.
+        password: Optional iDRAC password for basic authentication.
+    """
+    if not host:
+        logger.error("missing 'host' in params")
+        raise ValueError("missing 'host' in params")
+
+    url = _get_url(host=host, port=port)
+    debug_log_params("get_error_and_event_registry", {
+        "host": host,
+        "port": port,
+        "verify": verify,
+        "username": username,
+        "password": password,
+        "message_ids": message_ids,
+    })
+
+    # Try bundled local EEMI file first
+    local_path = os.path.join(os.path.dirname(__file__), "files", "eemi.json")
+    try:
+        if os.path.exists(local_path):
+            logger.info("loading local EEMI registry from %s", local_path)
+            with open(local_path, "r") as fh:
+                data = json.load(fh)
+            messages = data.get("Messages") or {}
+            # If specific message_ids were requested, return a mapping of
+            # message_id -> entry (None if not found). If no message_ids
+            # were provided, return the entire registry.
+            if message_ids:
+                result_map = {mid: messages.get(mid) for mid in message_ids}
+                return json.dumps(result_map)
+            return json.dumps(messages)
+    except Exception:
+        logger.exception("failed to load local EEMI registry %s", local_path)
+
+    # Fallback to querying the iDRAC Redfish registry
+    client = DellRedfishClient(base_url=url, username=username, password=password)
+    results = {}
+    for message_id in message_ids:
+        try:
+            results[message_id] = client.get_error_and_event_registry(message_id=message_id)
+        except Exception:
+            # Preserve failures as None but continue collecting other IDs
+            logger.exception("failed to fetch registry entry for %s", message_id)
+            results[message_id] = None
+
+    return json.dumps(results)
+
 @mcp.tool
 def get_lc_logs(
     host: str,

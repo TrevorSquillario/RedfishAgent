@@ -303,19 +303,26 @@ async def startup_event_sender():
     logger.debug(f"Startup senders config: listener={listener_url} ENABLE_ALERTS={enable_alerts} ENABLE_METRICS={enable_metrics}")
 
     async def event_sender():
-        async with httpx.AsyncClient() as client:
-            async for item in idrac_generator('Event'):
-                payload = None
-                try:
-                    payload = json.loads(item)
-                except Exception:
-                    payload = item.strip()
-                try:
-                    resp = await client.post(listener_url, json=payload, timeout=10)
-                    logger.info(f"Posted event to {listener_url}: status={resp.status_code}")
-                except Exception as e:
-                    logger.error(f"Failed to post event to {listener_url}: {e}")
-                await asyncio.sleep(15)
+        while True:
+            try:
+                async with httpx.AsyncClient() as client:
+                    async for item in idrac_generator('Event'):
+                        payload = None
+                        try:
+                            payload = json.loads(item)
+                        except Exception:
+                            payload = item.strip()
+                        try:
+                            resp = await client.post(listener_url, json=payload, timeout=10)
+                            logger.info(f"Posted event to {listener_url}: status={resp.status_code}")
+                        except Exception as e:
+                            logger.error(f"Failed to post event to {listener_url}: {e}")
+                        await asyncio.sleep(15)
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.exception(f"Unhandled error in event_sender: {e}")
+                await asyncio.sleep(5)
 
     if enable_alerts:
         asyncio.create_task(event_sender())
@@ -323,19 +330,26 @@ async def startup_event_sender():
         logger.info('Background event sender disabled via ENABLE_ALERTS')
 
     async def metric_sender():
-        async with httpx.AsyncClient() as client:
-            async for item in idrac_generator('MetricReport'):
-                payload = None
-                try:
-                    payload = json.loads(item)
-                except Exception:
-                    payload = item.strip()
-                try:
-                    resp = await client.post(listener_url, json=payload, timeout=10)
-                    logger.info(f"Posted metric to {listener_url}: status={resp.status_code}")
-                except Exception as e:
-                    logger.error(f"Failed to post metric to {listener_url}: {e}")
-                await asyncio.sleep(15)
+        while True:
+            try:
+                async with httpx.AsyncClient() as client:
+                    async for item in idrac_generator('MetricReport'):
+                        payload = None
+                        try:
+                            payload = json.loads(item)
+                        except Exception:
+                            payload = item.strip()
+                        try:
+                            resp = await client.post(listener_url, json=payload, timeout=10)
+                            logger.info(f"Posted metric to {listener_url}: status={resp.status_code}")
+                        except Exception as e:
+                            logger.error(f"Failed to post metric to {listener_url}: {e}")
+                        await asyncio.sleep(15)
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.exception(f"Unhandled error in metric_sender: {e}")
+                await asyncio.sleep(5)
 
     if enable_metrics: 
         asyncio.create_task(metric_sender())

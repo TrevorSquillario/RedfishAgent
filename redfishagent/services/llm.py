@@ -7,24 +7,28 @@ from typing import Any, Dict, Optional, List
 import logging
 import time
 import os
+import re
+import json
+from urllib.parse import urlparse, parse_qs
 
 import openai
 
+from models.app import RedfishLogEntry, ConfigModel, PluginsConfig
 from .redis import RedisService
+from .inventory import InventoryService
 
 logger = logging.getLogger(__name__)
 
-
-
 class LLMService:
-	def __init__(self, redis_service: RedisService, db_service: Optional[Any] = None, config_service: Optional[Any] = None):
+	def __init__(self, redis_service: RedisService, config: ConfigModel, db_service: Optional[Any] = None, inventory_service: Optional[InventoryService] = None, output_service: Optional[Any] = None):
 		self.redis = redis_service
 		self.db = db_service
-		self.config = config_service
+		self.config = config
 		self._running = False
+		self.inventory = inventory_service
+		self.output = output_service
 
-	@staticmethod
-	async def fetch_mcp_tools(config_service: Optional[Any] = None, mcp_servers: Optional[List] = None) -> Optional[Any]:
+	async def fetch_mcp_tools(self) -> Optional[Any]:
 		"""Discover MCP servers and return the currently-available tools.
 
 		This helper mirrors the MCP lookup logic from the graph and returns
@@ -32,25 +36,9 @@ class LLMService:
 		"""
 		# Local import to avoid import cycles at module import time
 		from langchain_mcp_adapters.client import MultiServerMCPClient
-		from redfishagent.graphs.utils.mcp import build_mcp_servers_map
+		from graphs.utils.mcp import build_mcp_servers_map
 
-		if mcp_servers:
-			mcp_entries = mcp_servers
-		else:
-			# Determine mcp entries from a variety of possible config shapes
-			mcp_entries = None
-			if config_service is not None:
-				if isinstance(config_service, dict):
-					mcp_entries = config_service.get("mcp")
-				elif hasattr(config_service, "get"):
-					try:
-						mcp_entries = config_service.get("mcp")
-					except Exception:
-						mcp_entries = None
-				elif hasattr(config_service, "mcp"):
-					mcp_entries = getattr(config_service, "mcp")
-			else:
-				logger.error(f"Config Service not provided")
+		mcp_entries = self.config.mcp_servers
 
 		servers_map = build_mcp_servers_map(mcp_entries)
 
@@ -90,7 +78,7 @@ class LLMService:
 			logger.exception("Failed to fetch MCP tools")
 			return None
 
-	def subscribe_to_alerts(self, stream_name: Optional[str] = None, start_id: str = "0-0", block_ms: int = 1000) -> None:
+	async def subscribe_to_alerts(self, stream_name: Optional[str] = None, start_id: str = "0-0", block_ms: int = 1000) -> None: 
 		"""Listen to the configured Redis stream and log incoming entries.
 
 		If `stream_name` is not provided, the environment variable
@@ -120,8 +108,70 @@ class LLMService:
 						continue
 					for stream_name, entries in results:
 						for entry_id, fields in entries:
-							logger.info("Alert stream entry %s -> %s", entry_id, fields)
+							# Extract payload and source from the stream entry; handle bytes keys/values
+							def _get_field(key: str):
+								if key in fields:
+									return fields[key]
+								bkey = key.encode()
+								if bkey in fields:
+									return fields[bkey]
+								return None
+
+							raw_payload = _get_field("payload")
+							raw_source = _get_field("source")
+
+							# Normalize to strings
+							try:
+								payload_str = raw_payload.decode("utf-8") if isinstance(raw_payload, (bytes, bytearray)) else str(raw_payload)
+							except Exception:
+								payload_str = ""
+							try:
+								source = raw_source.decode("utf-8") if isinstance(raw_source, (bytes, bytearray)) else str(raw_source)
+							except Exception:
+								source = ""
+
+							# Parse payload JSON when possible
+							payload_obj: Dict[str, Any]
+							try:
+								payload_obj = json.loads(payload_str) if payload_str else {}
+							except Exception:
+								logger.exception("Failed to parse payload JSON for entry %s", entry_id)
+								payload_obj = {"raw": payload_str}
+
+							# Lookup labels from inventory for this source
+							labels: Dict[str, Any] = {}
+							try:
+								inv = self.inventory.get_inventory()
+								logger.debug(f"Inventory: {inv}")
+								# Find matching inventory entry by comparing source against targets
+								for inv_entry in inv:
+									targets = inv_entry.get("targets", []) or []
+									for t in targets:
+										ts = str(t)
+										match_name = ts.split(":")[0]
+										logger.debug(f"Searching for labels on {match_name}")
+										if match_name and match_name == source:
+											labels = inv_entry.get("labels", {}) or {}
+											logger.debug(f"Labels found: {labels}")
+											break
+									if labels:
+										break
+							except Exception:
+								logger.exception("Failed looking up inventory labels for source %s", source)
+
+							entry_obj = RedfishLogEntry(source=source, payload=payload_obj, labels=labels)
+							logger.info("RedfishLogEntry %s -> %s", entry_id, entry_obj)
 							last_id = entry_id
+							try:
+								await self.run_agent(log_entry=entry_obj)
+								# Delete the processed message from the Redis stream
+								try:
+									client.xdel(stream_name, entry_id)
+									logger.debug("Deleted stream entry %s from %s", entry_id, stream_name)
+								except Exception:
+									logger.exception("Failed to delete stream entry %s from %s", entry_id, stream_name)
+							except Exception:
+								logger.exception("Error while running agent for entry %s", entry_id)
 				except Exception:
 					logger.exception("Error reading from Redis stream %s", stream_name)
 					time.sleep(1)
@@ -159,32 +209,42 @@ class LLMService:
 			logger.exception("Error creating embedding via OpenAI-compatible API")
 			return None
 
-	async def run_agent(self) -> None:
-		"""Run the agent graph defined in `redfishagent.graphs.default`.
+	async def run_agent(self, log_entry: Optional[RedfishLogEntry] = None) -> None:
+		"""Run the agent graph defined in `graphs.default`.
 
 		This wraps the graph's `main` runner. It passes this service's `db`
 		as the `db_service` argument so the graph can access the database if
-		needed. Any exceptions during import or execution are logged and the
-		method returns gracefully.
+		needed. If provided, `log_entry` is forwarded to the graph as
+		`log_entry` so the agent can act on the current log entry. Any
+		exceptions during import or execution are logged and the method
+		returns gracefully.
 		"""
 		try:
 			from graphs import redfish_agent
 		except Exception:
-			logger.exception("Failed to import agent graph from redfishagent.graphs.default")
+			logger.exception("Failed to import agent graph from graphs.default")
 			return
 
 		try:
-			# Prefer the explicitly-passed config_service, otherwise use the
-			# config that may have been provided at construction time. Pass
-			# through any pre-fetched `mcp_tools` so the graph doesn't have to
-			# rediscover them itself.
-			cfg = self.config
 			try:
-				mcp_tools = await LLMService.fetch_mcp_tools(cfg)
+				mcp_tools = await self.fetch_mcp_tools()
 			except Exception:
 				logger.exception("Failed to fetch MCP tools before running agent")
 
-			await redfish_agent.main(db_service=self.db, config_service=cfg, mcp_tools=mcp_tools)
+			final_state = await redfish_agent.main(db_service=self.db, mcp_tools=mcp_tools, config=self.config, log_entry=log_entry)
+
+			logger.debug(f"redfish_agent final state: {final_state}")
+			# If an OutputService was injected, send the final message text to it.
+			try:
+				if getattr(self, "output", None) is not None:
+					try:
+						output_text = final_state.get("final_message", "") if isinstance(final_state, dict) else ""
+						self.output.run_output(output_text)
+						logger.info("Sent final agent message to OutputService")
+					except Exception:
+						logger.exception("Failed sending agent output to OutputService")
+			except Exception:
+				logger.exception("Unexpected error while dispatching output to OutputService")
 		except Exception:
 			logger.exception("Error while running agent graph")
 

@@ -11,6 +11,7 @@ from services.redis import RedisService
 from services.webhook import WebhookService
 from services.inventory import InventoryService
 from services.llm import LLMService
+from services.output import OutputService
 from services.database import init_database
 import os
 
@@ -29,7 +30,7 @@ class RedfishAgentApp:
         if self._initialized:
             return
         # initialize logger
-        self.logger = setup_logger("redfishagent.app")
+        self.logger = setup_logger("app")
 
         # Load configuration (may fail if config file not present)
         try:
@@ -111,6 +112,14 @@ class RedfishAgentApp:
             self.logger.warning(f"Could not initialize InventoryService: {e}")
             self.inventory_service = None
 
+        # Create a shared OutputService that uses the existing PluginLoader
+        try:
+            self.output_service = OutputService(plugin_loader=self.output_loader, context=context)
+            self.logger.info("OutputService initialized and attached to app")
+        except Exception as e:
+            self.logger.warning(f"Could not initialize OutputService: {e}")
+            self.output_service = None
+
         # Initialize RedisService and WebhookService
         try:
             redis_host = os.getenv("REDIS_HOST", "redis")
@@ -134,16 +143,30 @@ class RedfishAgentApp:
         # Initialize LLMService and start background listener for alerts
         try:
             # pass the parsed config model (not the service instance)
-            self.llm_service = LLMService(self.redis_service, self.db_manager, config_model)
+            self.llm_service = LLMService(redis_service=self.redis_service, db_service=self.db_manager, config=config_model, inventory_service=self.inventory_service, output_service=self.output_service)
             self.logger.info("LLMService initialized")
             try:
                 import threading
+                import asyncio
 
-                listener = threading.Thread(
-                    target=self.llm_service.subscribe_to_alerts,
-                    kwargs={"start_id": "$"},
-                    daemon=True,
-                )
+                def _start_llm_listener():
+                    loop = asyncio.new_event_loop()
+                    # keep a reference so other threads can interact if needed
+                    self._llm_listener_loop = loop
+                    asyncio.set_event_loop(loop)
+                    try:
+                        loop.run_until_complete(self.llm_service.subscribe_to_alerts(start_id="$"))
+                    finally:
+                        try:
+                            loop.run_until_complete(loop.shutdown_asyncgens())
+                        except Exception:
+                            pass
+                        loop.close()
+                        self._llm_listener_loop = None
+
+                listener = threading.Thread(target=_start_llm_listener, daemon=True)
+                # keep the thread reference for possible future joins
+                self._llm_listener_thread = listener
                 listener.start()
                 self.logger.info("LLMService subscribe_to_alerts started in background")
             except Exception:

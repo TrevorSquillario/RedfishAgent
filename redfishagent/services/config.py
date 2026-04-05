@@ -2,23 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import os
 
 import yaml
 
-
-@dataclass
-class PluginsConfig:
-    inventory: List[str] = field(default_factory=list)
-    output: List[str] = field(default_factory=list)
-
-
-@dataclass
-class ConfigModel:
-    plugins: PluginsConfig = field(default_factory=PluginsConfig)
-    mcp: List[str] = field(default_factory=list)
-
+from models.app import ConfigModel, PluginsConfig
 
 class ConfigService:
     """Loads the repository `/config/config.yaml` and exposes parsed config.
@@ -26,9 +15,13 @@ class ConfigService:
     The service only supports the single canonical path at the repo root:
     `/config/config.yaml`. The YAML is parsed during initialization and
     available as the `config` attribute (a `ConfigModel`).
+
+    The constructor accepts an optional `config_path`. If omitted or `None`,
+    the path is taken from the `CONFIG_PATH` environment variable or the
+    default `/config/config.yaml`.
     """
 
-    def __init__(self, config_path: str):
+    def __init__(self, config_path: Optional[str] = None):
         # Allow overriding the config path via the CONFIG_PATH env var
         if config_path:
             self.path = Path(config_path)
@@ -43,9 +36,11 @@ class ConfigService:
         plugins = data.get("plugins", {}) or {}
         inventory = plugins.get("inventory") or []
         output = plugins.get("output") or []
-        mcp = data.get("mcp") or []
+        mcp_servers = data.get("mcp_servers") or []
+        prompts = data.get("prompts") or {}
 
         return ConfigModel(
             plugins=PluginsConfig(inventory=list(inventory), output=list(output)),
-            mcp=list(mcp),
+            mcp_servers=list(mcp_servers),
+            prompts=dict(prompts)
         )
