@@ -11,7 +11,6 @@ sys.path.insert(0, str(ROOT / 'src'))
 
 from utils.idrac_redfish import iDRACRedfish
 
-@pytest.mark.integration
 def test_login_session_pass():
     """Integration test against a real Redfish server.
 

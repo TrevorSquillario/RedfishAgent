@@ -1,0 +1,29 @@
+{
+    "@odata.context": "/redfish/v1/$metadata#Event.Event",
+    "@odata.id": "/redfish/v1/EventService/Events/12/redfish/v1/EventService/Events/12",
+    "@odata.type": "#Event.v1_5_0.Event",
+    "Events": [
+        {
+            "EventId": "2243",
+            "EventTimestamp": "2025-01-29T21:26:31-0600",
+            "EventType": "Alert",
+            "MemberId": "207",
+            "Message": "The Write Endurance of Solid state drive (SSD) 0 in Backplane 1 of RAID Controller in Slot 1 is less than the threshold value of RemainingWrite Rated Endurance.",
+            "MessageArgs": [
+                "1"
+            ],
+            "MessageArgs@odata.count": 1,
+            "MessageId": "IDRAC.2.9.SSD0001",
+            "MessageSeverity": "Critical",
+            "Severity": "Critical"
+        }
+    ],
+    "Id": "12",
+    "Name": "Event Array",
+    "Oem": {
+        "Dell": {
+            "@odata.type": "#DellEvent.v1_0_0.DellEvent",
+            "ServerHostname": "r660-ubuntu22"
+        }
+    }
+}

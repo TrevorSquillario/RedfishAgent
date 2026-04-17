@@ -79,15 +79,38 @@ class RedfishMetricTool:
     def _format_stats(self, data: dict) -> str:
         try:
             results = data.get("data", {}).get("result", [])
-            stats = {}
+            grouped = {}
             for res in results:
-                stat_name = res.get("metric", {}).get("stat")
+                metric = res.get("metric", {}) or {}
+                metric_name = metric.get("__name__")
+                metric_id = metric.get("id")
+                stat_name = metric.get("stat")
                 value = res.get("value", [None, None])[1]
-                stats[stat_name] = value
-            return f"Stats: Current={stats.get('current')}, Avg={stats.get('average')}, Z-Score={stats.get('z_score')}"
+
+                key = (metric_name, metric_id)
+                if key not in grouped:
+                    grouped[key] = {"metric": {"name": metric_name, "id": metric_id}, "stats": {}}
+                if stat_name:
+                    grouped[key]["stats"][stat_name] = value
+
+            output = []
+            for (name, mid), content in grouped.items():
+                stats = content["stats"]
+                output.append(
+                    {
+                        "metric": {"name": name, "id": mid},
+                        "stats": {
+                            "current": stats.get("current"),
+                            "average": stats.get("average"),
+                            "z_score": stats.get("z_score"),
+                        },
+                    }
+                )
+
+            return json.dumps(output)
         except Exception:
             logger.exception("error formatting stats")
-            return "Stats: unavailable"
+            return json.dumps({"error": "Stats unavailable"})
 
 
 # FastMCP tool wrappers

@@ -25,7 +25,7 @@ def setup_logger(name: str = None) -> logging.Logger:
         logger.addHandler(console_handler)
     
     # Set level based on environment variable
-    logger.setLevel(os.getenv('LOG_LEVEL', logging.INFO))
+    logger.setLevel(os.getenv('LOG_LEVEL', "DEBUG"))
     
     return logger
 

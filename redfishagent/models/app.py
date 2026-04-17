@@ -4,8 +4,13 @@ from dataclasses import dataclass, field
 @dataclass
 class LogEntry:
     source: str
-    payload: Dict[str, Any]
     labels: Dict[str, Any]
+    event_id: str
+    event_timestamp: str
+    event_type: Optional[str] = None
+    message: Optional[str] = None
+    message_id: Optional[str] = None
+    severity: Optional[str] = None
 
 #
 # Config Models

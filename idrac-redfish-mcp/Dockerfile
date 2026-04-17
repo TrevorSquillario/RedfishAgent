@@ -20,9 +20,6 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY src/ /app/
-COPY redfish-dell /app/redfish-dell
-
-RUN pip install -e /app/redfish-dell
 
 # Run as non-root user
 RUN addgroup --system app && adduser --system --ingroup app app \

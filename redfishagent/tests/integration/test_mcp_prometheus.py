@@ -20,7 +20,6 @@ def mcp_servers() -> list:
     ]
 
 
-@pytest.mark.integration
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "host",
@@ -52,7 +51,6 @@ async def test_discover_metrics(host, main_mcp_client):
     assert isinstance(data, list)
 
 
-@pytest.mark.integration
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "host,metric_name",

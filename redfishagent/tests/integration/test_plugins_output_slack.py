@@ -4,7 +4,6 @@ import pytest
 
 from plugins.output.slack.main import SlackOutputPlugin
 
-@pytest.mark.integration
 def test_slack_output_plugin_live(monkeypatch):
     plugin = SlackOutputPlugin()
     # Use the environment-provided webhook URL; plugin reads it in initialize()

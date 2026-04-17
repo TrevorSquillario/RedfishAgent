@@ -8,6 +8,7 @@ from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 import json
 import ssl
 import os
+import base64
 import logging
 import random
 from datetime import datetime, timezone
@@ -65,6 +66,26 @@ def get_current_datetime_iso():
     now = datetime.now(timezone.utc)
     formatted_datetime = now.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     return formatted_datetime
+
+
+def get_screenshot_files():
+    """Return a list of screenshot file paths from known example_screenshots locations."""
+    candidates = []
+    # container runtime location
+    candidates_dirs = [
+        '/app/example_screenshots',
+        os.path.join(os.path.dirname(__file__), 'example_screenshots'),
+    ]
+
+    for d in candidates_dirs:
+        if os.path.isdir(d):
+            for fn in os.listdir(d):
+                path = os.path.join(d, fn)
+                if os.path.isfile(path):
+                    candidates.append(path)
+    # sort by filename (case-insensitive) for deterministic ordering
+    candidates.sort(key=lambda p: os.path.basename(p).lower())
+    return candidates
 
 def update_timestamp_on_logs(event):
     for log in event["Events"]:
@@ -293,6 +314,34 @@ def redfish_dynamic(request: Request, full_path: str):
     except Exception as e:
         logger.exception("Failed to read/parse index file %s", local_index)
         return JSONResponse(status_code=500, content={"error": "failed to read index.json"})
+
+
+# ExportServerScreenShot action - return a base64-encoded screenshot from example_screenshots
+@app.post('/redfish/v1/Managers/iDRAC.Embedded.1/Oem/Dell/DellLCService/Actions/DellLCService.ExportServerScreenShot')
+async def export_server_screenshot(request: Request):
+    """Return a JSON payload with `ServerScreenShotFile` containing base64 of a screenshot.
+
+    Looks for files under /app/example_screenshots or src/example_screenshots.
+    If `FileType` is provided in the request body and is numeric, use it as a selector index.
+    """
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    files = get_screenshot_files()
+
+    chosen = random.choice(files)
+
+    try:
+        with open(chosen, 'rb') as fh:
+            bdata = fh.read()
+        b64 = base64.b64encode(bdata).decode('ascii')
+        logger.info('ExportServerScreenShot: served file %s (size=%d)', chosen, len(bdata))
+        return JSONResponse(status_code=200, content={"ServerScreenShotFile": b64})
+    except Exception as e:
+        logger.exception('Failed to read/encode screenshot %s', chosen)
+        return JSONResponse(status_code=500, content={"error": "failed to read screenshot"})
 
 # Background task: send events produced by idrac_generator to listener URL
 @app.on_event("startup")

@@ -34,6 +34,8 @@ services:
 
   # Models: 
   vllm:
+    profiles:
+      - nvidia/Nemotron-Cascade-2-30B-A3B
     #image: nvcr.io/nvidia/vllm:26.01-py3
     image: vllm/vllm-openai:latest #v0.18.0-cu130
     #build:
@@ -83,13 +85,10 @@ services:
               capabilities: [gpu]
 
   vllm-gemma4:
-    profiles:
-      - gemma4
-    #image: nvcr.io/nvidia/vllm:26.01-py3
-    image: vllm/vllm-openai:gemma4-arm64-cu130 #v0.18.0-cu130
-    #build:
-    #  context: .
-    #  dockerfile: vllm/Dockerfile
+    #image: vllm/vllm-openai:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.vllm
     container_name: vllm-gemma4
     network_mode: host
     ipc: host
@@ -101,24 +100,32 @@ services:
     volumes:
       - ${HOME}/.cache/huggingface:/root/.cache/huggingface
       - ${HOME}/gb10/vllm_cache/vllm_gemma4:/root/.cache/vllm
+    #environment:
+    #  - VLLM_NVFP4_GEMM_BACKEND=marlin
     command: >
-      --model nvidia/Gemma-4-31B-IT-NVFP4
+      google/gemma-4-26B-A4B-it
       --tensor-parallel-size 1
       --port 8090
-      --quantization modelopt
-      --max-model-len 131072
-      --gpu-memory-utilization 0.65
+      --max-model-len 256144
+      --gpu-memory-utilization 0.60
       --trust-remote-code
+      --enable-prefix-caching
+      --kv-cache-dtype fp8
+      --reasoning-parser gemma4
+      --tool-call-parser gemma4
+      --enable-auto-tool-choice
+      --enable-chunked-prefill
+      --max-num-batched-tokens 32768
       --compilation-config '{"cache_dir": "/root/.cache/vllm"}'
     restart: "no"
+    depends_on:
+      vllm-embed: 
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
       interval: 30s
       timeout: 10s
       retries: 10
-    #depends_on:
-    #  vllm-embed:
-    #    condition: service_healthy
     deploy:
       resources:
         reservations:

@@ -46,12 +46,14 @@ services:
       - POSTGRES_HOST=pgvector
       - POSTGRES_PORT=5432
       - OPENAI_API_BASE=http://192.168.0.30:8090 # vllm
-      - OPENAI_MODEL=nvidia/Nemotron-Cascade-2-30B-A3B
+      - OPENAI_MODEL=google/gemma-4-26B-A4B-it
+      #- OPENAI_MODEL=nvidia/Nemotron-Cascade-2-30B-A3B
       # Leave OPENAI_API_KEY unset for local OpenAI-compatible servers like vllm
       - PHOENIX_COLLECTOR_ENDPOINT=http://phoenix:4317
       - PROMETHEUS_URL=http://victoriametrics:8428
       - REDIS_STREAM=redfish_alerts
-      - SLACK_TOKEN=${SLACK_TOKEN}
+      - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
       - SLACK_CHANNEL_ID=${SLACK_CHANNEL_ID}
     networks:
       - redfishagent
@@ -135,7 +137,7 @@ services:
       LOG_LEVEL: DEBUG
     volumes:
       - ./idrac-redfish-mcp/src:/app
-      - ./idrac-redfish-mcp/redfish-dell:/app/redfish-dell
+      - ./redfish-mockup-server/src/example_screenshots:/app/example_screenshots:ro
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
       interval: 1s

@@ -4,8 +4,8 @@
     "@odata.type": "#Event.v1_5_0.Event",
     "Events": [
         {
-            "EventId": "2241",
-            "EventTimestamp": "2025-01-29T21:26:31-0600",
+            "EventId": "2240",
+            "EventTimestamp": "2025-01-29T21:00:31-0600",
             "EventType": "Alert",
             "MemberId": "207",
             "Message": "CPU 1 has a thermal trip (over-temperature) event.",
@@ -18,8 +18,8 @@
             "Severity": "Critical"
         },
         {
-            "EventId": "2242",
-            "EventTimestamp": "2025-01-29T23:26:31-0600",
+            "EventId": "2241",
+            "EventTimestamp": "2025-01-29T21:26:31-0600",
             "EventType": "Alert",
             "MemberId": "207",
             "Message": "CPU 1 has a thermal trip (over-temperature) event.",

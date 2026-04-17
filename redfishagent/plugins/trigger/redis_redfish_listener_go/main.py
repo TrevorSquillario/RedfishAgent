@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import time
+import re
 
 import redis as redis_lib
 
@@ -115,7 +116,7 @@ class RedisRedfishListenerGoTriggerPlugin(TriggerPluginInterface):
                                 payload_obj: Dict[str, Any] = json.loads(payload_str) if payload_str else {}
                             except Exception:
                                 logger.exception("Failed to parse payload JSON for entry %s", entry_id)
-                                payload_obj = {"raw": payload_str}
+                                continue
 
                             labels: Dict[str, Any] = {}
                             try:
@@ -133,7 +134,53 @@ class RedisRedfishListenerGoTriggerPlugin(TriggerPluginInterface):
                             except Exception:
                                 logger.exception("Failed looking up inventory labels for source %s", source)
 
-                            entry_obj = LogEntry(source=source, payload=payload_obj, labels=labels)
+                            # Normalize event data: payload may include an "Events" list
+                            event_obj: Dict[str, Any] = {}
+                            try:
+                                if isinstance(payload_obj, dict) and isinstance(payload_obj.get("Events"), list) and payload_obj.get("Events"):
+                                    event_obj = payload_obj.get("Events")[0] or {}
+                                elif isinstance(payload_obj, dict) and any(k in payload_obj for k in ("EventId", "MessageId", "Message")):
+                                    event_obj = payload_obj
+                                else:
+                                    event_obj = payload_obj
+                            except Exception:
+                                event_obj = payload_obj or {}
+
+                            # Extract fields expected by LogEntry
+                            # Extract an alert identifier. Prefer EventId/MemberId, but
+                            # if MessageId exists parse a short alert token from it
+                            # (e.g. from 'IDRAC.2.9.CPU0001' -> 'CPU0001'). This yields
+                            # a single alert id per LogEntry so downstream consumers
+                            # (graphs, agents) can assume one alert per entry.
+                            event_id = event_obj.get("EventId", None)
+                            message_id_raw = event_obj.get("MessageId", None)
+                            message_id = ""
+                            if message_id_raw:
+                                # If MessageId is present, try to extract a compact
+                                # identifier like the original parsing logic did.
+                                try:
+                                    mid_str = str(message_id_raw).strip() if message_id_raw else ""
+                                except Exception:
+                                    mid_str = ""
+                                last_seg = mid_str.split('.')[-1] if '.' in mid_str else mid_str
+                                m = re.search(r'([A-Za-z]+\d+)$', last_seg)
+                                candidate = m.group(1).upper() if m else (last_seg.upper() if last_seg else None)
+                                message_id = candidate or ""
+                            event_timestamp = str(event_obj.get("EventTimestamp") or "")
+                            event_type = event_obj.get("EventType") or None
+                            message = event_obj.get("Message") or None
+                            severity = event_obj.get("MessageSeverity") or event_obj.get("Severity") or None
+
+                            entry_obj = LogEntry(
+                                source=source,
+                                labels=labels,
+                                event_id=event_id,
+                                event_timestamp=event_timestamp,
+                                event_type=event_type,
+                                message=message,
+                                message_id=message_id,
+                                severity=severity,
+                            )
                             logger.info("LogEntry %s -> %s", entry_id, entry_obj)
                             last_id = entry_id
 

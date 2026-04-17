@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional, List
 from services.llm import LLMService
 from services.config import ConfigService
 
-@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_fetch_mcp_tools_with_mocked_services(mcp_servers):
     config_service = object()

@@ -515,20 +515,35 @@ func worker(id int, jobs <-chan Job) {
 			}
 		}
 
-		// Push the raw payload to the Redis stream for downstream processing
+		// Push one Redis stream entry per Events item (expecting the same payload shape)
 		if RedisClient != nil {
-			vals := map[string]interface{}{
-				"source":  job.Source,
-				"payload": string(job.Payload),
-			}
-			xid, err := RedisClient.XAdd(context.Background(), &redis.XAddArgs{
-				Stream: RedisStream,
-				Values: vals,
-			}).Result()
-			if err != nil {
-				log.Printf("[Worker %d] Redis XAdd failed: %v", id, err)
+			if evs, ok := top["Events"].([]interface{}); ok && len(evs) > 0 {
+				for _, ev := range evs {
+					evPayload := map[string]interface{}{"Events": []interface{}{ev}}
+					// Preserve a few top-level metadata fields when present
+					for _, k := range []string{"Id", "Name", "@odata.type", "Oem"} {
+						if v, ok := top[k]; ok {
+							evPayload[k] = v
+						}
+					}
+					b, _ := json.Marshal(evPayload)
+					vals := map[string]interface{}{
+						"source":  job.Source,
+						"payload": string(b),
+					}
+					xid, err := RedisClient.XAdd(context.Background(), &redis.XAddArgs{
+						Stream: RedisStream,
+						Values: vals,
+					}).Result()
+					if err != nil {
+						log.Printf("[Worker %d] Redis XAdd failed: %v", id, err)
+					} else {
+						log.Printf("[Worker %d] Pushed event from %s to stream %s id=%s", id, job.Source, RedisStream, xid)
+					}
+				}
 			} else {
-				log.Printf("[Worker %d] Pushed event from %s to stream %s id=%s", id, job.Source, RedisStream, xid)
+				// No Events present — do not push a fallback raw payload (per new expectation)
+				log.Printf("[Worker %d] No Events array in payload from %s, skipping Redis push", id, job.Source)
 			}
 		}
 

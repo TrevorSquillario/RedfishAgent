@@ -1,3 +1,2 @@
 slack-sdk[optional]
 aiohttp
-slack-blocks-markdown
