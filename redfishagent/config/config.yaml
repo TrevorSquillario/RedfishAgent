@@ -40,5 +40,5 @@ prompts:
     main: >
       1. Use the get_error_and_event_registry tool to get details about the alerts.
       2. Get the top 10 lifecycle logs of severity Critical.
-      3. Discover the related metrics using the discover_metrics tool, then query them using the get_metric_analysis tool.
-      4. In the case of a potential system crash, use the export_server_screen_shot tool to provide a summary of the LastCrashScreenShot image <|image|>
+      3. Discover the related metrics using the discover_metrics tool, then query them using the get_metric_analysis tool setting window hours to 24.
+      4. In the case of a potential system crash, use the export_server_screen_shot tool to provide a summary of the ServerScreenShot image <|image|>

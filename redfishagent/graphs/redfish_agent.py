@@ -260,6 +260,7 @@ async def main(log_entry: LogEntry, config: ConfigModel, db_service: Optional[An
 
     user_prompt = (
         f"Alert triggered host {getattr(log_entry, 'source', '')}.\n"
+        f"Event Timestamp: {getattr(log_entry, 'event_timestamp', '')}\n"
         f"Event ID: {getattr(log_entry, 'event_id', '')}\n"
         f"Message ID: {getattr(log_entry, 'message_id', '')}\n"
         f"Message: {getattr(log_entry, 'message', '')}\n"

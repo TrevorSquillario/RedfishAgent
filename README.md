@@ -10,8 +10,8 @@ Redis Stream (alerts) <-- RedfishAgent LLMService --> LangGraph (LLM w/ tool cal
 2. The RedfishAgent `InventoryService` calls all the inventory plugins defined in `redfishagent/plugins/inventory` 
 3. Prometheus creates scrape jobs for each Redfish endpoint based on the provided inventory
 4. When each scrape job is run it calls http://idrac_exporter:9348/metrics?target=redfish-testserver-0 as the target. The idrac_exporter queries the Redfish endpoints and presents a /metrics endpoint for the target.
-5. Prometheus AlertManager is setup to trigger an alert on all Critical log messages. Defined in `victoria-metrics/rules/alerts-redfish-alerts.yml`. This triggers a webhook defined in `victoria-metrics/alertmanager.yml`
-6. The RedfishAgent `WebhookService` receives this webhook at `/api/webhook/alerts/prometheus` in the `webhook_router.py`. This calls the `handle_prometheus` method of the `WebhookService` which sends the alert to the `alerts` Redis stream
+5. Prometheus AlertManager is setup to trigger an alert on all Critical log messages. Defined in `victoria-metrics/rules/alerts-redfish-alerts.yml`. This triggers a webhook defined in `victoria-metrics/alertmanager-webhook.yml`
+6. The RedfishAgent `WebhookPrometheusTriggerPlugin` receives this webhook at `/api/webhook/alerts/prometheus`. This calls the `handle_prometheus` method of the plugin which sends the alert to the `alerts` Redis stream
 7. The RedfishAgent `LLMService` listens to the `alerts` Redis stream and triggers the LangGraph workflow
 8. The output of the LangGraph workflow is sent to all output plugins defined in `redfishagent/plugins/output` 
 
@@ -74,14 +74,13 @@ Redis Stream (alerts) <-- RedfishAgent LLMService --> LangGraph (LLM w/ tool cal
     |     AlertManager       |
     +-----------+------------+
                 |
-(5) Triggers Webhook         | (/api/webhook/prometheus defined in alertmanager.yml)
+(5) Triggers Webhook         | (/api/webhook/alerts/prometheus defined in alertmanager-webhook.yml)
                 |
                 v
     +------------------------+
     |     RedfishAgent       |
-    |   WebhookService       |
-    | (webhook_router.py)    |
-    +-----------+------------+
+    | WebhookPrometheusPlugin|
+    +------------------------+
                 |
 (6) Calls handle_prometheus   | (Sends to Redis "alerts" stream)
                 |
