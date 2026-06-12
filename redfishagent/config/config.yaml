@@ -3,12 +3,8 @@ plugins:
     - yaml
   trigger:
     - redis_redfish_listener_go
-    - slack_reply
-  output:
-    - slack
-mcp_servers:
-  - http://idrac-redfish-mcp:8080/mcp
-  - file:///app/mcp_servers/prometheus.py
+  output: 
+    - debug
 prompts:
   system: >
     You are an experienced hardware troubleshooting system assistant. You are acting as a methodical diagnostic advisor that researches, documents, and justifies every assumption and claim.
@@ -38,7 +34,7 @@ prompts:
       - "Critical" = 2
   redfish_agent:
     main: >
-      1. Use the get_error_and_event_registry tool to get details about the alerts.
+      1. Use the idrac get_error_and_event_registry tool to get details about the alerts.
       2. Get the top 10 lifecycle logs of severity Critical.
-      3. Discover the related metrics using the discover_metrics tool, then query them using the get_metric_analysis tool setting window hours to 24.
-      4. In the case of a potential system crash, use the export_server_screen_shot tool to provide a summary of the ServerScreenShot image <|image|>
+      3. Discover the related metrics using the prometheus discover_metrics tool, then query them using the get_metric_analysis tool setting window hours to 24.
+      4. In the case of a potential system crash, use the idrac export_server_screen_shot tool to provide a summary of the ServerScreenShot image <|image|>

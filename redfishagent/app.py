@@ -13,7 +13,6 @@ from services.plugin_loader import PluginLoader
 from services.inventory import InventoryService
 from services.llm import LLMService
 from services.output import OutputService
-from services.database import init_database
 import os
 
 class RedfishAgentApp:
@@ -82,16 +81,9 @@ class RedfishAgentApp:
             # best-effort: continue even if we can't inject logger
             pass
 
-        # Initialize DatabaseManager (services/database.py)
-        try:
-            self.db_manager = init_database()
-            self.logger.info("DatabaseManager initialized")
-        except Exception as e:
-            self.logger.warning(f"Could not initialize DatabaseManager: {e}")
-            self.db_manager = None
 
         # Context passed to plugins during initialization
-        context = {"config": config_model, "logger": self.logger, "app": self, "db": self.db_manager, "fastapi_app": self.fastapi_app}
+        context = {"config": config_model, "logger": self.logger, "app": self, "fastapi_app": self.fastapi_app}
 
         # Discover and initialize plugins
         try:
@@ -131,7 +123,7 @@ class RedfishAgentApp:
         # Initialize LLMService
         try:
             # pass the parsed config model (not the service instance)
-            self.llm_service = LLMService(db_service=self.db_manager, config=config_model, inventory_service=self.inventory_service, output_service=self.output_service)
+            self.llm_service = LLMService(config=config_model, inventory_service=self.inventory_service, output_service=self.output_service)
             self.logger.info("LLMService initialized")
         except Exception as e:
             self.logger.warning(f"Could not initialize LLMService: {e}")

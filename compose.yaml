@@ -18,7 +18,7 @@ services:
     build:
       context: .
       dockerfile: redfishagent/Dockerfile
-    image: redfishagent:latest
+    #image: redfishagent:latest
     container_name: redfishagent
     ports:
       - "8081:8000"
@@ -40,16 +40,9 @@ services:
       - REDIS_PORT=6379
       - REDIS_DB=0
       #- REDIS_PASSWORD=
-      - POSTGRES_DB=redfishagent_db
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_HOST=pgvector
-      - POSTGRES_PORT=5432
-      - OPENAI_API_BASE=http://192.168.0.30:8090 # vllm
-      - OPENAI_MODEL=google/gemma-4-26B-A4B-it
-      #- OPENAI_MODEL=nvidia/Nemotron-Cascade-2-30B-A3B
-      # Leave OPENAI_API_KEY unset for local OpenAI-compatible servers like vllm
-      - PHOENIX_COLLECTOR_ENDPOINT=http://phoenix:4317
+      - OPENAI_API_BASE=${OPENAI_API_BASE}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=bg-digitalservices/Gemma-4-26B-A4B-it-NVFP4
       - PROMETHEUS_URL=http://victoriametrics:8428
       - REDIS_STREAM=redfish_alerts
       - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
@@ -60,23 +53,6 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      idrac-redfish-mcp:
-        condition: service_healthy
-
-  pgvector:
-    image: pgvector/pgvector:pg17 # PostgreSQL with pgvector support
-    container_name: pgvector
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: redfishagent_db
-    ports:
-      - "5432:5432"
-    #volumes:
-      #- ~/app/pgvector:/var/lib/postgresql/data
-      #- ./postgres/schema.sql:/docker-entrypoint-initdb.d/schema.sql
-    networks:
-      - redfishagent
 
   redfish-listener:
     build:
@@ -125,29 +101,29 @@ services:
     networks:
       - redfishagent
 
-  idrac-redfish-mcp:
-    build:
-      context: ./idrac-redfish-mcp
-      dockerfile: Dockerfile
-    image: idrac-redfish-mcp:latest
-    container_name: idrac-redfish-mcp
-    restart: unless-stopped
-    environment:
-      PYTHONUNBUFFERED: "1"
-      LOG_LEVEL: DEBUG
-    volumes:
-      - ./idrac-redfish-mcp/src:/app
-      - ./redfish-mockup-server/src/example_screenshots:/app/example_screenshots:ro
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      interval: 1s
-      timeout: 1s
-      retries: 25
-      start_period: 0s
-    ports:
-      - "8092:8080"
-    networks:
-      - redfishagent
+  # idrac-redfish-mcp:
+  #   build:
+  #     context: ./idrac-redfish-mcp
+  #     dockerfile: Dockerfile
+  #   #image: idrac-redfish-mcp:latest
+  #   container_name: idrac-redfish-mcp
+  #   restart: unless-stopped
+  #   environment:
+  #     PYTHONUNBUFFERED: "1"
+  #     LOG_LEVEL: DEBUG
+  #   volumes:
+  #     - ./idrac-redfish-mcp/src:/app
+  #     - ./redfish-mockup-server/src/example_screenshots:/app/example_screenshots:ro
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+  #     interval: 1s
+  #     timeout: 1s
+  #     retries: 25
+  #     start_period: 0s
+  #   ports:
+  #     - "8092:8080"
+  #   networks:
+  #     - redfishagent
 
   # VictoriaMetrics instance, a single process responsible for
   # storing metrics and serve read requests.
@@ -260,18 +236,6 @@ services:
       - ./grafana/provisioning/dashboards/vmalert.json:/var/lib/grafana/dashboards/vmalert.json
       - ./grafana/provisioning/dashboards/alert-statistics.json:/var/lib/grafana/dashboards/alert-statistics.json
       - ./grafana/provisioning/dashboards/metrics-explorer.json:/var/lib/grafana/dashboards/metrics-explorer.json
-
-  # LLM Tracing and Debugging Tool
-  phoenix:
-    image: arizephoenix/phoenix:latest
-    ports:
-      - "6006:6006"  # UI and OTLP HTTP collector
-      - "4317:4317"  # OTLP gRPC collector
-    restart: always
-    networks:
-      - redfishagent
-
-
 
 networks:
   redfishagent:

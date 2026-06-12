@@ -8,8 +8,9 @@ services:
     container_name: redfish-mockup-14g
     environment: 
       - LISTENER_DEST=http://redfish-listener:8080/redfish/events
-      - ENABLE_ALERTS=True
+      - ENABLE_ALERTS=False
       - ENABLE_METRICS=False
+      - LOG_LEVEL=DEBUG
     volumes:
       - ./redfish-mockup-server/src:/app:cached
       - ~/redfish-mockups/R740xd_iDRAC_7.00.00.174/redfish:/redfish
@@ -17,10 +18,11 @@ services:
     healthcheck:
       disable: true
     restart: "no"
-    ports:
-      - 8001:443
+    #ports:
+    #  - 8001:443
     networks:
-      - redfishagent
+      macvlan_net:
+        ipv4_address: 192.168.0.200
 
   15g:
     build:
@@ -30,7 +32,7 @@ services:
     container_name: redfish-mockup-15g
     environment: 
       - LISTENER_DEST=http://redfish-listener:8080/redfish/events
-      - ENABLE_ALERTS=True
+      - ENABLE_ALERTS=False
       - ENABLE_METRICS=False
     volumes:
       - ./redfish-mockup-server/src:/app:cached
@@ -39,10 +41,11 @@ services:
     healthcheck:
       disable: true
     restart: "no"
-    ports:
-      - 8002:443
+    #ports:
+    #  - 8002:443
     networks:
-      - redfishagent
+      macvlan_net:
+        ipv4_address: 192.168.0.201
 
   16g:
     build:
@@ -52,7 +55,7 @@ services:
     container_name: redfish-mockup-16g
     environment: 
       - LISTENER_DEST=http://redfish-listener:8080/redfish/events
-      - ENABLE_ALERTS=True
+      - ENABLE_ALERTS=False
       - ENABLE_METRICS=False
     volumes:
       - ./redfish-mockup-server/src:/app:cached
@@ -61,10 +64,11 @@ services:
     healthcheck:
       disable: true
     restart: "no"
-    ports:
-      - 8003:443
+    #ports:
+    #  - 8003:443
     networks:
-      - redfishagent
+      macvlan_net:
+        ipv4_address: 192.168.0.202
 
   17g:
     build:
@@ -74,7 +78,7 @@ services:
     container_name: redfish-mockup-17g
     environment: 
       - LISTENER_DEST=http://redfish-listener:8080/redfish/events
-      - ENABLE_ALERTS=True
+      - ENABLE_ALERTS=False
       - ENABLE_METRICS=False
     volumes:
       - ./redfish-mockup-server/src:/app:cached
@@ -85,11 +89,23 @@ services:
     healthcheck:
       disable: true
     restart: "no"
-    ports:
-      - 8004:443
+    #ports:
+    #  - 8004:443
     networks:
-      - redfishagent
+      macvlan_net:
+        ipv4_address: 192.168.0.203
+
+#networks:
+#  redfishagent:
+#    driver: bridge
 
 networks:
-  redfishagent:
-    driver: bridge
+  macvlan_net:
+    name: macvlan_net
+    driver: macvlan
+    driver_opts:
+      parent: enP7s7
+    ipam:
+      config:
+        - subnet: 192.168.0.0/24
+          gateway: 192.168.0.1
