@@ -66,6 +66,18 @@ class RedisRedfishListenerGoTriggerPlugin(TriggerPluginInterface):
                 host=host, port=port, db=db, password=password, decode_responses=True
             )
 
+        # Verify we can reach Redis. If not, log a warning and continue without it.
+        if self._redis_client is not None:
+            try:
+                # ping() will raise if the server is unreachable or auth fails
+                self._redis_client.ping()
+            except Exception as exc:
+                logger.error(
+                    "RedisRedfishListenerGoTriggerPlugin: cannot connect to Redis (%s); continuing without Redis",
+                    exc,
+                )
+                self._redis_client = None
+
         self._stream_name = context.get("stream_name") or os.getenv("REDIS_STREAM", "redfish_events")
         logger.info("RedisRedfishListenerGoTriggerPlugin initialized (stream=%s)", self._stream_name)
 

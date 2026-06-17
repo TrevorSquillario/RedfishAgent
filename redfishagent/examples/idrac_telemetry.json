@@ -1,0 +1,47 @@
+    {
+      "MetricId": "TemperatureReading",
+      "MetricProperty": "",
+      "MetricValue": "50",
+      "Oem": {
+        "Dell": {
+          "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+          "ContextID": "Embedded NIC 1 Port 1 Partition 1",
+          "FQDD": "NIC.Embedded.1-1-1",
+          "Label": "Embedded NIC 1 Port 1 Partition 1 TemperatureReading",
+          "Source": "hiitempsensors"
+        }
+      },
+      "Timestamp": "2026-04-01T01:45:35.000Z"
+    },
+
+    {
+      "MetricId": "AddressParityError",
+      "MetricProperty": "/redfish/v1/Systems/System.Embedded.1/Memory/DIMM.Socket.A1/MemoryMetrics#HealthData/AlarmTrips/AddressParityError",
+      "MetricValue": "false",
+      "Oem": {
+        "Dell": {
+          "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+          "ContextID": "DIMM A1",
+          "FQDD": "DIMM.Socket.A1",
+          "Label": "DIMM A1 AddressParityError",
+          "Source": "memorymetrics"
+        }
+      },
+      "Timestamp": "2026-04-01T01:44:50.000Z"
+    },
+
+    {
+      "MetricId": "ReadErrorRate",
+      "MetricProperty": "",
+      "MetricValue": "0",
+      "Oem": {
+        "Dell": {
+          "@odata.type": "#DellMetricReportValue.v1_0_1.DellMetricReportValue",
+          "ContextID": "SMARTData:Disk.Bay.0:Enclosure.Internal.0-1:RAID.SL.1-1",
+          "FQDD": "SMARTData:Disk.Bay.0:Enclosure.Internal.0-1:RAID.SL.1-1",
+          "Label": "SMARTData:Disk.Bay.0:Enclosure.Internal.0-1:RAID.SL.1-1 ReadErrorRate",
+          "Source": "smart-sas"
+        }
+      },
+      "Timestamp": "2026-04-01T00:52:09.000Z"
+    },

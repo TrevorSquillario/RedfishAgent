@@ -13,6 +13,9 @@ services:
       retries: 5
     networks:
       - redfishagent
+    profiles:
+      - all
+      - metrics
 
   redfishagent:
     build:
@@ -45,14 +48,14 @@ services:
       - OPENAI_MODEL=bg-digitalservices/Gemma-4-26B-A4B-it-NVFP4
       - PROMETHEUS_URL=http://victoriametrics:8428
       - REDIS_STREAM=redfish_alerts
-      - SLACK_APP_TOKEN=${SLACK_APP_TOKEN}
-      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
-      - SLACK_CHANNEL_ID=${SLACK_CHANNEL_ID}
     networks:
       - redfishagent
     depends_on:
       redis:
         condition: service_healthy
+    profiles:
+      - all
+      - metrics
 
   redfish-listener:
     build:
@@ -81,10 +84,13 @@ services:
         condition: service_healthy
     networks:
       - redfishagent
+    profiles:
+      - all
 
   idrac-exporter:
     #image: ghcr.io/mrlhansen/idrac_exporter:latest
     #image: idrac_exporter:latest
+    # docker build -t idrac_exporter:mr .
     image: idrac_exporter:mr 
     container_name: idrac-exporter
     restart: unless-stopped
@@ -100,30 +106,9 @@ services:
       - "9348:9348"
     networks:
       - redfishagent
-
-  # idrac-redfish-mcp:
-  #   build:
-  #     context: ./idrac-redfish-mcp
-  #     dockerfile: Dockerfile
-  #   #image: idrac-redfish-mcp:latest
-  #   container_name: idrac-redfish-mcp
-  #   restart: unless-stopped
-  #   environment:
-  #     PYTHONUNBUFFERED: "1"
-  #     LOG_LEVEL: DEBUG
-  #   volumes:
-  #     - ./idrac-redfish-mcp/src:/app
-  #     - ./redfish-mockup-server/src/example_screenshots:/app/example_screenshots:ro
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-  #     interval: 1s
-  #     timeout: 1s
-  #     retries: 25
-  #     start_period: 0s
-  #   ports:
-  #     - "8092:8080"
-  #   networks:
-  #     - redfishagent
+    profiles:
+      - all
+      - metrics
 
   # VictoriaMetrics instance, a single process responsible for
   # storing metrics and serve read requests.
@@ -156,6 +141,9 @@ services:
     depends_on:
       redfishagent:
         condition: service_healthy
+    profiles:
+      - all
+      - metrics
 
   #  Metrics collector.
   #  It scrapes targets defined in --promscrape.config
@@ -175,6 +163,9 @@ services:
       - redfishagent
     depends_on:
       - "victoriametrics"
+    profiles:
+      - all
+      - metrics
 
   # vmalert executes alerting and recording rules
   vmalert:
@@ -202,6 +193,9 @@ services:
     restart: always
     networks:
       - redfishagent
+    profiles:
+      - all
+      - metrics
 
   # alertmanager receives alerting notifications from vmalert
   # and distributes them according to --config.file.
@@ -236,7 +230,13 @@ services:
       - ./grafana/provisioning/dashboards/vmalert.json:/var/lib/grafana/dashboards/vmalert.json
       - ./grafana/provisioning/dashboards/alert-statistics.json:/var/lib/grafana/dashboards/alert-statistics.json
       - ./grafana/provisioning/dashboards/metrics-explorer.json:/var/lib/grafana/dashboards/metrics-explorer.json
+    profiles:
+      - all
+      - metrics
+    networks:
+      - redfishagent
 
 networks:
   redfishagent:
+    name: redfishagent
     driver: bridge
