@@ -39,9 +39,9 @@ services:
       - ~/.cache/datalab:/root/.cache/datalab # Model cache for marker-pdf
     environment:
       - LOG_LEVEL=DEBUG
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=0
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_DB=${REDIS_DB:-0}
       #- REDIS_PASSWORD=
       - OPENAI_API_BASE=${OPENAI_API_BASE}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -62,20 +62,25 @@ services:
       context: ./redfish-listener-go
     image: redfishagent/redfish-listener:latest
     container_name: redfish-listener
-    ports:
+    #ports:
       #- "8443:8443"
-      - "8080:8080"
+      #- "8080:8080"
     restart: unless-stopped
     #volumes:
     #  - ~/redfish-mockups/ssl:/certs
+    env_file:
+      - .env
     environment:
-      - LISTENER_DEST=http://192.168.0.30:8080/redfish/events
+      LISTENER_DEST: http://192.168.0.30:8080/redfish/events
       #- LISTENER_DEST=https://127.0.0.1:8443/redfish/events
       #- LISTENER_CERT=/certs/server.crt
       #- LISTENER_KEY=/certs/server.key
-      - REDIS_URL=redis://redis:6379
-      - REDIS_STREAM=redfish_alerts
-      - INVENTORY_URL=http://redfishagent:8000/api/inventory/list
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_STREAM: ${REDIS_STREAM:-redfish_alerts}
+      INVENTORY_URL: http://redfishagent:8000/api/inventory/list
+      IDRAC_USERNAME: ${IDRAC_USERNAME}
+      IDRAC_PASSWORD: ${IDRAC_PASSWORD}
     # command: ["python", "src/redfish_listener.py", "-c", "src/config.ini"]
     depends_on:
       redis:

@@ -1,9 +1,10 @@
 
-from starlette.responses import StreamingResponse
-from sse_starlette.sse import EventSourceResponse
+from collections.abc import AsyncIterable
+
 import asyncio
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
+from fastapi.sse import EventSourceResponse, ServerSentEvent
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 import json
 import ssl
@@ -102,8 +103,8 @@ def update_timestamp_on_metrics(event):
 
 # Reusable helpers moved to src/utils.py
 
-async def idrac_generator(event_type):
-    for i in range(random.randint(1,1000)):
+async def idrac_generator(event_type: str) -> AsyncIterable[ServerSentEvent]:
+    while True:
         files = get_files(event_type)
         file = random.choice(files)
         with open(file) as f:
@@ -115,19 +116,18 @@ async def idrac_generator(event_type):
             else:
                 idrac_sse_example_json = update_timestamp_on_metrics(idrac_sse_example_json)
                 idrac_sse_example_json = utils.rewrite_ids_random(idrac_sse_example_json)
-            yield json.dumps(idrac_sse_example_json) + '\n'
-        await asyncio.sleep(random.randint(1,10))
+            yield ServerSentEvent(data=idrac_sse_example_json)
+        await asyncio.sleep(random.randint(1, 10))
 
-@app.get('/redfish/v1/SSE')
-def sse(request: Request):
+@app.get('/redfish/v1/SSE', response_class=EventSourceResponse)
+async def sse(request: Request) -> AsyncIterable[ServerSentEvent]:
     filter = request.query_params.get('$filter', None)
-    event = ""
-    if filter:
-        event_type = filter.split(" ")[-1]
-        logger.debug(f"Detected event type: {event_type}")
-        event = idrac_generator(event_type)
-        logger.debug(event)
-    return EventSourceResponse(event)
+    if not filter:
+        return
+    event_type = filter.split(" ")[-1]
+    logger.debug(f"Detected event type: {event_type}")
+    async for event in idrac_generator(event_type):
+        yield event
 
 
 @app.api_route('/redfish/v1/Managers/iDRAC.Embedded.1/LogServices/Sel/Entries', methods=["GET", "HEAD"])
