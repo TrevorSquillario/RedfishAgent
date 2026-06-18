@@ -2,7 +2,10 @@ module github.com/TrevorSquillario/redfishagent
 
 go 1.22.2
 
-require github.com/redis/go-redis/v9 v9.18.0
+require (
+	github.com/redis/go-redis/v9 v9.18.0
+	github.com/tmaxmax/go-sse v0.11.0
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

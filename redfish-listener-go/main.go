@@ -1,21 +1,28 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/tmaxmax/go-sse"
 )
 
-// iDRACLogEvent perfectly maps the Dell LCLog Entry payload
+// ─── iDRAC Log Event (Dell LCLog Entry) ───
+
 type iDRACLogEvent struct {
 	ODataContext string `json:"@odata.context"`
 	ODataID      string `json:"@odata.id"`
@@ -26,7 +33,7 @@ type iDRACLogEvent struct {
 	Links        struct {
 		OriginOfCondition struct {
 			ODataID string `json:"@odata.id"`
-		} `json:"OriginOfCondition"`
+		} `json:"Links"`
 	} `json:"Links"`
 	Message     string   `json:"Message"`
 	MessageArgs []string `json:"MessageArgs"`
@@ -47,56 +54,45 @@ type RedfishSSEPayload struct {
 	Events []iDRACLogEvent `json:"Events"`
 }
 
-// Simplified Redfish Event Structure for Alerts
-type RedfishEventArray struct {
-	Events []struct {
-		EventId           string `json:"EventId"`
-		Severity          string `json:"Severity"` // e.g., Critical, Warning, OK
-		Message           string `json:"Message"`
-		MessageId         string `json:"MessageId"`
-		OriginOfCondition string `json:"OriginOfCondition"` // e.g., /redfish/v1/Chassis/System.Embedded.1/Thermal
-		EventTimestamp    string `json:"EventTimestamp"`
-	} `json:"Events"`
+// ─── Inventory ───
+
+type InventoryTarget struct {
+	Targets []string          `json:"targets"`
+	Labels  map[string]string `json:"labels"`
 }
+
+// ─── SSE Listener ───
 
 type SSEListener struct {
 	redisClient  *redis.Client
 	httpClient   *http.Client
 	ctx          context.Context
 	inventoryURL string
+	redisStream  string
 }
 
-// InventoryTarget represents a single entry from the inventory API
-type InventoryTarget struct {
-	Targets []string          `json:"targets"`
-	Labels  map[string]string `json:"labels"`
-}
+// ─── Inventory ───
 
-// getInventory fetches the list of BMC targets from the inventory API
 func (l *SSEListener) getInventory() ([]string, error) {
 	log.Printf("[inventory] fetching inventory from %s", l.inventoryURL)
 
 	req, err := http.NewRequestWithContext(l.ctx, "GET", l.inventoryURL, nil)
 	if err != nil {
-		log.Printf("[inventory] error creating request: %v", err)
 		return nil, fmt.Errorf("creating inventory request: %w", err)
 	}
 
 	resp, err := l.httpClient.Do(req)
 	if err != nil {
-		log.Printf("[inventory] error fetching inventory: %v", err)
 		return nil, fmt.Errorf("fetching inventory: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("[inventory] unexpected status code: %d", resp.StatusCode)
 		return nil, fmt.Errorf("inventory API returned status %d", resp.StatusCode)
 	}
 
 	var targets []InventoryTarget
 	if err := json.NewDecoder(resp.Body).Decode(&targets); err != nil {
-		log.Printf("[inventory] error decoding inventory response: %v", err)
 		return nil, fmt.Errorf("decoding inventory: %w", err)
 	}
 
@@ -112,157 +108,159 @@ func (l *SSEListener) getInventory() ([]string, error) {
 	return bmcs, nil
 }
 
-func main() {
-	// Read environment variables
-	redisHost := os.Getenv("REDIS_HOST")
-	redisPort := os.Getenv("REDIS_PORT")
-	redisStream := os.Getenv("REDIS_STREAM")
-	idracUser := os.Getenv("IDRAC_USERNAME")
-	idracPass := os.Getenv("IDRAC_PASSWORD")
-	idracSSLVerify := os.Getenv("IDRAC_SSL_VERIFY")
+// ─── Redfish Auth (token-based) ───
 
-	if redisHost == "" {
-		log.Fatal("[redis] REDIS_HOST environment variable is not set")
-	}
-	if redisPort == "" {
-		log.Fatal("[redis] REDIS_PORT environment variable is not set")
-	}
-	if redisStream == "" {
-		log.Fatal("[redis] REDIS_STREAM environment variable is not set")
+func createRedfishSession(ctx context.Context, client *http.Client, host, user, pass string) (string, error) {
+	sessionUrl := fmt.Sprintf("%s/redfish/v1/SessionService/Sessions", host)
+
+	payload := map[string]string{
+		"UserName": user,
+		"Password": pass,
 	}
 
-	// Initialize high-throughput Redis client
-	rdb := redis.NewClient(&redis.Options{
-		Addr:         fmt.Sprintf("%s:%s", redisHost, redisPort),
-		PoolSize:     100, // Important for scaling concurrent writes
-		MinIdleConns: 10,
-	})
-
-	// Setup HTTP transport based on IDRAC_SSL_VERIFY
-	insecure := idracSSLVerify != "true" && idracSSLVerify != "1"
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: insecure},
-	}
-
-	listener := &SSEListener{
-		redisClient:  rdb,
-		httpClient:   &http.Client{Transport: tr, Timeout: 0}, // 0 means no timeout for persistent streams
-		ctx:          context.Background(),
-		inventoryURL: os.Getenv("INVENTORY_URL"),
-	}
-
-	if listener.inventoryURL == "" {
-		log.Fatal("[inventory] INVENTORY_URL environment variable is not set")
-	}
-	if idracUser == "" {
-		log.Fatal("[auth] IDRAC_USERNAME environment variable is not set")
-	}
-	if idracPass == "" {
-		log.Fatal("[auth] IDRAC_PASSWORD environment variable is not set")
-	}
-
-	// Load BMCS from inventory API
-	bmcs, err := listener.getInventory()
+	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
-		log.Fatalf("[inventory] failed to load inventory: %v", err)
+		return "", err
 	}
 
-	if len(bmcs) == 0 {
-		log.Fatal("[inventory] no BMC targets found in inventory")
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, sessionUrl, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("unexpected status %s: %s", resp.Status, string(body))
 	}
 
-	for _, bmc := range bmcs {
-		log.Printf("[sse] launching SSE listener for %s", bmc)
-		// Launch each connection into its own lightweight goroutine (~2KB memory footprint each)
-		go listener.startAlertStream(bmc, idracUser, idracPass)
+	token := resp.Header.Get("X-Auth-Token")
+	if token == "" {
+		return "", fmt.Errorf("X-Auth-Token header was missing from the response")
 	}
 
-	// Keep main alive
-	select {}
+	return token, nil
 }
 
-func (l *SSEListener) startAlertStream(bmcIP, user, pass string) {
-	url := "https://" + bmcIP + "/redfish/v1/SSE?$filter=EventType eq 'Event'"
-	log.Printf("[sse] connecting to %s", url)
+// ─── SSE per BMC ───
 
+func (l *SSEListener) startAlertStream(bmcIP, user, pass string) {
+	// Build token-authenticated SSE URL
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+		Timeout: 0,
+	}
+
+	ctx, cancel := context.WithCancel(l.ctx)
+	defer cancel()
+
+	var token string
+	for {
+		select {
+		case <-l.ctx.Done():
+			log.Printf("[auth] context done, stopping auth retry for %s", bmcIP)
+			return
+		default:
+		}
+
+		var authErr error
+		token, authErr = createRedfishSession(ctx, httpClient, "https://"+bmcIP, user, pass)
+		if authErr == nil {
+			break
+		}
+		log.Printf("[auth] failed to create session for %s: %v — retrying in 30s", bmcIP, authErr)
+		time.Sleep(30 * time.Second)
+	}
+	log.Printf("[auth] token acquired for %s", bmcIP)
+
+	// Build SSE URL with $filter
+	baseSseUrl, err := url.Parse(fmt.Sprintf("https://%s/redfish/v1/SSE", bmcIP))
+	if err != nil {
+		log.Printf("[sse] invalid URL for %s: %v", bmcIP, err)
+		return
+	}
+	params := url.Values{}
+	params.Add("$filter", "EventType eq Event")
+	baseSseUrl.RawQuery = params.Encode()
+	finalUrl := baseSseUrl.String()
+
+	// Create go-sse client
+	sseClient := &sse.Client{
+		HTTPClient: httpClient,
+		Backoff: sse.Backoff{
+			MaxRetries: -1, // no auto-retry; we handle reconnect manually
+		},
+	}
+
+	// Reconnect loop
 	for {
 		select {
 		case <-l.ctx.Done():
 			log.Printf("[sse] context done, stopping %s", bmcIP)
 			return
 		default:
-			req, _ := http.NewRequestWithContext(l.ctx, "GET", url, nil)
-			req.SetBasicAuth(user, pass)
-			req.Header.Set("Accept", "text/event-stream")
-
-			resp, err := l.httpClient.Do(req)
-			if err != nil {
-				log.Printf("[sse] connection error for %s: %v", bmcIP, err)
-				time.Sleep(5 * time.Second)
-				continue
-			}
-			log.Printf("[sse] connected to %s (status: %d)", bmcIP, resp.StatusCode)
-
-			// Borrowed concept from Dell reference: Scan the live stream line by line
-			scanner := bufio.NewScanner(resp.Body)
-			var sb strings.Builder
-
-			for scanner.Scan() {
-				line := scanner.Text()
-
-				// SSE lines starting with data: contain our JSON payload
-				if strings.HasPrefix(line, "data:") {
-					sb.WriteString(strings.TrimPrefix(line, "data:"))
-
-					// Often payloads span across lines or terminate. If valid complete JSON:
-					rawJson := sb.String()
-
-					// Offload parsing and Redis ingestion quickly
-					go l.processAndIngest(bmcIP, rawJson)
-
-					sb.Reset()
-				}
-			}
-			if err := scanner.Err(); err != nil {
-				log.Printf("[sse] scanning error for stream %s: %v", bmcIP, err)
-			}
-			resp.Body.Close()
-			log.Printf("[sse] stream closed for %s, reconnecting in 1s", bmcIP)
-
-			// If stream breaks, wait a second and let the loop reconnect
-			time.Sleep(1 * time.Second)
 		}
+
+		req, connErr := http.NewRequestWithContext(ctx, http.MethodGet, finalUrl, nil)
+		if connErr != nil {
+			log.Printf("[sse] failed to create request for %s: %v", bmcIP, connErr)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		req.Header.Set("X-Auth-Token", token)
+		req.Header.Set("Accept", "text/event-stream")
+
+		conn := sseClient.NewConnection(req)
+
+		conn.SubscribeMessages(func(event sse.Event) {
+			l.handleEvent(bmcIP, event.Data)
+		})
+
+		log.Printf("[sse] connecting to %s", finalUrl)
+		if connectErr := conn.Connect(); !errors.Is(connectErr, context.Canceled) {
+			log.Printf("[sse] stream interrupted for %s: %v — reconnecting in 1s", bmcIP, connectErr)
+		}
+
+		time.Sleep(1 * time.Second)
 	}
 }
 
-func (l *SSEListener) processAndIngest(bmcIP string, rawJson string) {
-	// Fast abort if it doesn't look like an event payload
+// ─── Event Processing & Redis Ingestion ───
+
+func (l *SSEListener) handleEvent(bmcIP string, rawJson string) {
 	if !strings.Contains(rawJson, "MessageId") {
 		return
 	}
 
 	var payload RedfishSSEPayload
-
-	// Try unmarshaling assuming it's wrapped in an "Events" array (Standard Redfish SSE behavior)
 	err := json.Unmarshal([]byte(rawJson), &payload)
 
-	// Fallback: If iDRAC pushes the raw object directly without the "Events" array
 	if err != nil || len(payload.Events) == 0 {
-		log.Printf("[parse] failed to unmarshal Events array for %s: %v", bmcIP, err)
 		var singleEvent iDRACLogEvent
 		if err := json.Unmarshal([]byte(rawJson), &singleEvent); err == nil && singleEvent.MessageID != "" {
 			payload.Events = []iDRACLogEvent{singleEvent}
 		} else {
-			// Not a valid event or parsing failed
-			log.Printf("[parse] fallback unmarshal also failed for %s: %v", bmcIP, err)
 			return
 		}
 	}
 
-	// Iterate through events and push individually to Redis for clean downstream agent processing
 	for _, event := range payload.Events {
+		// Marshal this specific event for raw_json
+		eventRaw, marshalErr := json.Marshal(event)
+		if marshalErr != nil {
+			log.Printf("[parse] failed to marshal event for %s: %v", bmcIP, marshalErr)
+			continue
+		}
 
-		// Package an enriched object specifically designed for a triage worker
 		triagePayload := map[string]interface{}{
 			"bmc_ip":       bmcIP,
 			"timestamp":    time.Now().Unix(),
@@ -273,16 +271,103 @@ func (l *SSEListener) processAndIngest(bmcIP string, rawJson string) {
 			"args":         event.MessageArgs,
 			"category":     event.Oem.Dell.Category,
 			"component_id": event.Links.OriginOfCondition.ODataID,
-			"raw_json":     rawJson, // Keep raw data in case the agent needs deeper context
+			"raw_json":     string(eventRaw),
 		}
 
-		data, err := json.Marshal(triagePayload)
-		if err != nil {
+		data, marshalErr := json.Marshal(triagePayload)
+		if marshalErr != nil {
+			log.Printf("[parse] failed to marshal triage payload for %s: %v", bmcIP, marshalErr)
 			continue
 		}
 
-		// Push to the Redis stream
-		// l.redisClient.XAdd(l.ctx, &redis.XAddArgs{Stream: redisStream, Values: data})
-		log.Printf("[redis] pushed event to %s", string(data))
+		cmd := l.redisClient.XAdd(l.ctx, &redis.XAddArgs{
+			Stream:     l.redisStream,
+			Values:     map[string]interface{}{"event": string(data)},
+			MaxLen:     0,
+			Approx:     true,
+			NoMkStream: false,
+		})
+		if err := cmd.Err(); err != nil {
+			log.Printf("[redis] failed to push event for %s: %v", bmcIP, err)
+		} else {
+			log.Printf("[redis] pushed event to %s", string(data))
+		}
 	}
+}
+
+// ─── Main ───
+
+func main() {
+	redisHost := os.Getenv("REDIS_HOST")
+	redisPort := os.Getenv("REDIS_PORT")
+	redisStream := os.Getenv("REDIS_STREAM")
+	idracUser := os.Getenv("IDRAC_USERNAME")
+	idracPass := os.Getenv("IDRAC_PASSWORD")
+	inventoryURL := os.Getenv("INVENTORY_URL")
+
+	if redisHost == "" || redisPort == "" || redisStream == "" {
+		log.Fatal("[redis] REDIS_HOST, REDIS_PORT, and REDIS_STREAM must be set")
+	}
+	if inventoryURL == "" {
+		log.Fatal("[inventory] INVENTORY_URL must be set")
+	}
+	if idracUser == "" || idracPass == "" {
+		log.Fatal("[auth] IDRAC_USERNAME and IDRAC_PASSWORD must be set")
+	}
+
+	// Redis client
+	rdb := redis.NewClient(&redis.Options{
+		Addr:         fmt.Sprintf("%s:%s", redisHost, redisPort),
+		PoolSize:     100,
+		MinIdleConns: 10,
+	})
+
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		log.Fatalf("[redis] cannot connect: %v", err)
+	}
+
+	// HTTP client (no timeout for SSE streams)
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+		Timeout: 0,
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	listener := &SSEListener{
+		redisClient:  rdb,
+		httpClient:   httpClient,
+		ctx:          ctx,
+		inventoryURL: inventoryURL,
+		redisStream:  redisStream,
+	}
+
+	// Load BMCS from inventory
+	bmcs, err := listener.getInventory()
+	if err != nil {
+		log.Fatalf("[inventory] failed: %v", err)
+	}
+	if len(bmcs) == 0 {
+		log.Fatal("[inventory] no BMC targets found")
+	}
+
+	// Launch SSE listeners (one goroutine per BMC)
+	for _, bmc := range bmcs {
+		go listener.startAlertStream(bmc, idracUser, idracPass)
+	}
+
+	log.Printf("[main] listening on %d BMC(s), Ctrl+C to stop", len(bmcs))
+
+	// Graceful shutdown on SIGINT / SIGTERM
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	<-sigChan
+
+	log.Println("[main] shutting down…")
+	cancel()
+	rdb.Close()
+	log.Println("[main] done")
 }

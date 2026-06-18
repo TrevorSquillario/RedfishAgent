@@ -122,8 +122,10 @@ async def idrac_generator(event_type: str) -> AsyncIterable[ServerSentEvent]:
 @app.get('/redfish/v1/SSE', response_class=EventSourceResponse)
 async def sse(request: Request) -> AsyncIterable[ServerSentEvent]:
     filter = request.query_params.get('$filter', None)
+    logger.debug(f"Incoming SSE request with filter: {filter}")
     if not filter:
-        return
+        # Default to Events if no filter provided (matches typical Redfish SSE usage)
+        filter = 'EventType eq "Event"'
     event_type = filter.split(" ")[-1]
     logger.debug(f"Detected event type: {event_type}")
     async for event in idrac_generator(event_type):

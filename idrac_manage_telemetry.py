@@ -55,6 +55,9 @@ parser.add_argument('-l', '--list', action='store_true', help='Only list telemet
 parser.add_argument('--get-metric-report-definition', dest='get_metric_report_definition', help='Get a single MetricReportDefinition by name (e.g. MemorySensor)', required=False)
 parser.add_argument('--get-metric-report', dest='get_metric_report', help='Get a single MetricReport by name (e.g. MemorySensor)', required=False)
 parser.add_argument('--metric-report', dest='metric_report', help='Comma-separated MetricReportDefinition name(s) to operate on (e.g. MemorySensor,CPUSensor)', required=False)
+parser.add_argument('--test', dest='test_event_id', help='Submit a test event by MessageId (e.g. Alert.1.0)', required=False)
+parser.add_argument('--destination', dest='destination_url', help='Destination URL for test event (default: http://LISTENER_IP:9000)', required=False)
+parser.add_argument('--event-type', dest='event_type', help='Event type for test event (default: Alert)', required=False)
 
 args = vars(parser.parse_args())
 
@@ -191,6 +194,43 @@ def get_metric_report(ip, user, pwd, report_name):
         return None
 
 
+def submit_test_event(ip, user, pwd, destination_url, event_type, message_id):
+    """
+    Create and send a test event
+
+    :param ip: IP address of the target iDRAC
+    :param user: Username of the target iDRAC
+    :param pwd: Password of the target iDRAC
+    :param destination_url: The URL of the target endpoint to which you want the iDRAC logs to be sent
+    :param event_type: The type of event for which you want to send data. Valid values include StatusChange,
+                       ResourceUpdated, ResourceAdded, ResourceRemoved, Alert, and MetricReport.
+    :param message_id: ID of the test message
+    """
+    payload = {
+        "Destination": destination_url,
+        "EventTypes": event_type,
+        "Context": "Root",
+        "Protocol": "Redfish",
+        "MessageId": message_id,
+    }
+    url = "https://{}/redfish/v1/EventService/Actions/EventService.SubmitTestEvent".format(ip)
+    headers = {"content-type": "application/json"}
+    logging.info("Submitting test event to %s (ip=%s, type=%s, messageId=%s)", destination_url, ip, event_type, message_id)
+    try:
+        response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False,
+                                 auth=(user, pwd), timeout=REQUEST_TIMEOUT)
+    except Exception as e:
+        logging.error("- FAIL, request to %s failed: %s", url, e)
+        sys.exit(1)
+    if response.status_code == 204:
+        logging.info("- PASS, POST command succeeded, status code %s returned, event type \"%s\" successfully sent to "
+                     "destination \"%s\"", response.status_code, event_type, destination_url)
+    else:
+        logging.error("- FAIL, POST command failed, status code %s returned, error: %s",
+                      response.status_code, response.text)
+        sys.exit(1)
+
+
 def expand_hosts_arg(hosts_arg):
     """Expand a comma-delimited hosts string into a list of host strings."""
     if not hosts_arg:
@@ -311,30 +351,6 @@ def create_redfish_subscription(ip, user=None, pwd=None, port=443):
 
     logging.info("Successfully subscribed to %s (id=%s) status=%s url=%s", host, unsub_id, resp.status_code, url)
 
-    # best-effort remote address extraction
-    # remote_addr = None
-    # try:
-    #     # urllib3 / requests internal socket access (best-effort)
-    #     sock = getattr(resp.raw, '_connection', None)
-    #     if sock is None:
-    #         # fallback to original_response
-    #         orig = getattr(resp.raw, '_original_response', None)
-    #         if orig is not None and hasattr(orig, 'peer'):
-    #             remote_addr = orig.peer
-    #     else:
-    #         # not reliable across versions
-    #         pass
-    # except Exception:
-    #     remote_addr = None
-
-    # if remote_addr:
-    #     try:
-    #         with RemoteMapLock:
-    #             RemoteMappings.append({remote_addr: host})
-    #             logging.info("Recorded remote mapping: %s -> %s", remote_addr, host)
-    #     except Exception:
-    #         pass
-
     # record subscription for later cleanup (store canonical EP info)
     try:
         with RemoteMapLock:
@@ -381,7 +397,7 @@ def clean_subscriptions(user_override=None, pwd_override=None):
 
         url = f"https://{host}:{port}/redfish/v1/EventService/Subscriptions/{unsub}"
 
-        headers = {}
+        headers = {"Content-Type": "application/json"}
         auth = (user, pwd) if user or pwd else None
 
         try:
@@ -397,6 +413,7 @@ def clean_subscriptions(user_override=None, pwd_override=None):
 
         if 200 <= resp.status_code < 300:
             logging.info("Deleted subscription %s on %s (status=%s)", unsub, host, resp.status_code)
+            Subscriptions.remove(s)
         else:
             logging.error("Failed to delete subscription %s on %s (status=%s)", unsub, host, resp.status_code)
 
@@ -471,4 +488,23 @@ if __name__ == "__main__":
             get_metric_report(single, user, pwd, args.get('get_metric_report'))
         sys.exit(0)
 
+    # Handle --test event submission
+    if args.get('test_event_id'):
+        if not args.get('hosts'):
+            logging.error("Missing host: use --hosts or -f CSV or -i inventory")
+            sys.exit(1)
+        hlist = expand_hosts_arg(args.get('hosts'))
+        if len(hlist) != 1:
+            logging.error("--test requires exactly one host in --hosts")
+            sys.exit(1)
+        single = hlist[0]
+        user = args.get('u') or os.getenv('IDRAC_USERNAME', '')
+        pwd = args.get('p') or os.getenv('IDRAC_PASSWORD', '')
+        destination = args.get('destination_url') or "http://{}:9000".format(LISTENER_IP)
+        event_type = args.get('event_type') or 'Alert'
+        submit_test_event(single, user, pwd, destination, event_type, args.get('test_event_id'))
+        sys.exit(0)
+
     logging.warning("- WARNING, missing or incorrect arguments passed in for executing script")
+    
+
