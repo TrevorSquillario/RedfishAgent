@@ -1,19 +1,5 @@
-# EnableOrDisableAllTelemetryReports.py Python script using Redfish API to Enable or Disable All Telemetry Reports
-# with Default/Existing settings.
-#
-#
-# _author_ = Sankunny Jayaprasad <Sankunny.Jayaprasad@Dell.com>
-# _author_ = Texas Roemer <Texas_Roemer@Dell.com>
-# _version_ = 2.0
-#
-# Copyright (c) 2022, Dell, Inc.
-#
-# This software is licensed to you under the GNU General Public License,
-# version 2 (GPLv2). There is NO WARRANTY for this software, express or
-# implied, including the implied warranties of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE. You should have received a copy of GPLv2
-# along with this software; if not, see
-# http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
+# 
+# pip install pyyaml requests sseclient
 #
 
 import argparse
@@ -23,6 +9,8 @@ import logging
 import sys
 import warnings
 import requests
+from sseclient import SSEClient
+from pprint import pprint
 import yaml
 import os
 import threading
@@ -56,8 +44,11 @@ parser.add_argument('--get-metric-report-definition', dest='get_metric_report_de
 parser.add_argument('--get-metric-report', dest='get_metric_report', help='Get a single MetricReport by name (e.g. MemorySensor)', required=False)
 parser.add_argument('--metric-report', dest='metric_report', help='Comma-separated MetricReportDefinition name(s) to operate on (e.g. MemorySensor,CPUSensor)', required=False)
 parser.add_argument('--test', dest='test_event_id', help='Submit a test event by MessageId (e.g. Alert.1.0)', required=False)
-parser.add_argument('--destination', dest='destination_url', help='Destination URL for test event (default: http://LISTENER_IP:9000)', required=False)
-parser.add_argument('--event-type', dest='event_type', help='Event type for test event (default: Alert)', required=False)
+parser.add_argument('--test-destination', dest='test_destination_url', help='Destination URL for test event (default: http://LISTENER_IP:9000)', required=False)
+parser.add_argument('--test-event-type', dest='test_event_type', help='Event type for test event (default: Alert)', required=False)
+parser.add_argument('--test-sse', action='store_true', dest='test_sse', help='Open SSE subscription and print events', required=False)
+parser.add_argument('-v', '--subscription-view', action='store_true', dest='v', help='View Redfish EventService subscriptions', required=False)
+parser.add_argument('--subscription-remove-all', action='store_true', dest='subscription_remove_all', help='Remove all Redfish EventService subscriptions on target hosts', required=False)
 
 args = vars(parser.parse_args())
 
@@ -194,7 +185,7 @@ def get_metric_report(ip, user, pwd, report_name):
         return None
 
 
-def submit_test_event(ip, user, pwd, destination_url, event_type, message_id):
+def submit_test_event(ip, user, pwd, test_destination_url, test_event_type, message_id):
     """
     Create and send a test event
 
@@ -207,15 +198,15 @@ def submit_test_event(ip, user, pwd, destination_url, event_type, message_id):
     :param message_id: ID of the test message
     """
     payload = {
-        "Destination": destination_url,
-        "EventTypes": event_type,
+        "Destination": test_destination_url,
+        "EventTypes": test_event_type,
         "Context": "Root",
         "Protocol": "Redfish",
         "MessageId": message_id,
     }
     url = "https://{}/redfish/v1/EventService/Actions/EventService.SubmitTestEvent".format(ip)
     headers = {"content-type": "application/json"}
-    logging.info("Submitting test event to %s (ip=%s, type=%s, messageId=%s)", destination_url, ip, event_type, message_id)
+    logging.info("Submitting test event to %s (ip=%s, type=%s, messageId=%s)", test_destination_url, ip, test_event_type, message_id)
     try:
         response = requests.post(url, data=json.dumps(payload), headers=headers, verify=False,
                                  auth=(user, pwd), timeout=REQUEST_TIMEOUT)
@@ -229,6 +220,32 @@ def submit_test_event(ip, user, pwd, destination_url, event_type, message_id):
         logging.error("- FAIL, POST command failed, status code %s returned, error: %s",
                       response.status_code, response.text)
         sys.exit(1)
+
+
+def test_sse_subscription(idrac_ip: str, idrac_username: str, idrac_password: str):
+    """
+    Open an SSE stream to the target iDRAC and print received MetricReport events to stdout.
+
+    :param idrac_ip: IP address of the target iDRAC
+    :param idrac_username: Username of the target iDRAC
+    :param idrac_password: Password of the target iDRAC
+    """
+    logging.info("- INFO, starting SSE client, this may take a few seconds")
+    url = f"https://{idrac_ip}/redfish/v1/SSE?$filter=EventFormatType eq Event"
+    try:
+        messages = SSEClient(url,
+                             headers={'content-type': 'application/json'},
+                             verify=False,
+                             auth=(idrac_username, idrac_password))
+    except Exception as e:
+        logging.error("- FAIL, could not start SSE client: %s", e)
+        return
+
+    for sse_event in messages:
+        try:
+            pprint(sse_event.data)
+        except Exception:
+            logging.exception("- FAIL, error processing SSE event")
 
 
 def expand_hosts_arg(hosts_arg):
@@ -266,6 +283,23 @@ def load_inventory(path):
                     hosts.append(h)
 
     return hosts
+
+
+def load_hosts_list_from_args():
+    """Determine hosts list from command-line args or inventory file.
+
+    Returns a list of host strings (may be empty).
+    """
+    hosts_list = []
+    if args.get('hosts'):
+        hosts_list = expand_hosts_arg(args.get('hosts'))
+    elif args.get('inventory'):
+        try:
+            hosts_list = load_inventory(args.get('inventory'))
+        except Exception as e:
+            logging.error("Failed to load inventory %s: %s", args.get('inventory'), e)
+            sys.exit(1)
+    return hosts_list
 
 
 def create_redfish_subscription(ip, user=None, pwd=None, port=443):
@@ -418,6 +452,129 @@ def clean_subscriptions(user_override=None, pwd_override=None):
             logging.error("Failed to delete subscription %s on %s (status=%s)", unsub, host, resp.status_code)
 
 
+def log_subscription_details(subscriptions):
+    """Log readable details for a list of subscription members.
+
+    `subscriptions` is expected to be a list of dicts as returned by Redfish Member lists.
+    """
+    if not subscriptions:
+        logging.info("No subscriptions found")
+        return []
+    details = []
+    for m in subscriptions:
+        if not isinstance(m, dict):
+            details.append(str(m))
+            continue
+        oid = m.get('@odata.id') or m.get('Id') or m.get('Id')
+        # try to extract id from @odata.id
+        sub_id = None
+        if oid and isinstance(oid, str) and '/' in oid:
+            sub_id = oid.rstrip('/').rsplit('/', 1)[-1]
+        else:
+            sub_id = m.get('Id') or m.get('Name') or oid
+
+        dest = m.get('Destination') or m.get('DestinationURI') or None
+        protocol = m.get('Protocol') or None
+        details.append({'Id': sub_id, 'Destination': dest, 'Protocol': protocol, 'Raw': m})
+
+    for d in details:
+        logging.info("Subscription: id=%s destination=%s protocol=%s", d.get('Id'), d.get('Destination'), d.get('Protocol'))
+
+    return details
+
+
+def view_subscriptions(ip, user, pwd):
+    """Retrieve and log subscriptions for a single iDRAC.
+
+    This follows the pattern of other helpers in this script and respects the
+    `-v/--subscription-view` flag (checked by callers).
+    """
+    url = 'https://{}/redfish/v1/EventService/Subscriptions'.format(ip)
+    headers = {'content-type': 'application/json'}
+    try:
+        response = requests.get(url, headers=headers, verify=False, auth=(user, pwd), timeout=REQUEST_TIMEOUT)
+    except Exception as e:
+        logging.error("FAIL, request to %s failed: %s", url, e)
+        return None
+    if response.status_code == 200:
+        try:
+            response_date = json.loads(response.text)
+        except Exception:
+            logging.error("FAIL, failed to parse subscriptions response from %s", ip)
+            return None
+        subscriptions = response_date.get("Members")
+        return log_subscription_details(subscriptions)
+    else:
+        logging.error("FAIL, status code for reading subscriptions is not 200, code is: %s", response.status_code)
+        if hasattr(response, 'text'):
+            logging.error("FAIL, The response is: %s", response.text)
+        return None
+
+
+def delete_subscription(ip, user, pwd, subscription_id):
+    """Delete a single subscription on an iDRAC.
+
+    Returns True on success, False otherwise.
+    """
+    logging.info("Attempting to delete subscription with ID : %s on host %s", subscription_id, ip)
+    url = 'https://{}/redfish/v1/EventService/Subscriptions/{}'.format(ip, subscription_id)
+    headers = {'content-type': 'application/json'}
+    try:
+        response = requests.delete(url, headers=headers, verify=False, auth=(user, pwd), timeout=REQUEST_TIMEOUT)
+    except Exception as e:
+        logging.error("FAIL, request to delete subscription %s on %s failed: %s", subscription_id, ip, e)
+        return False
+    if 200 <= response.status_code < 300:
+        logging.info("Successfully deleted subscription with ID : %s on %s", subscription_id, ip)
+        return True
+    else:
+        logging.error("FAIL, status code for deleting subscription is not 2xx, code is: %s", response.status_code)
+        if hasattr(response, 'text'):
+            logging.error("FAIL, The response is: %s", response.text)
+        return False
+
+
+def delete_subscriptions_all(hosts, user, pwd):
+    """Delete all subscriptions on each host in `hosts` using provided credentials.
+
+    This fetches the subscriptions list and deletes each member.
+    """
+    for host in hosts:
+        logging.info("Listing subscriptions on %s", host)
+        url = f'https://{host}/redfish/v1/EventService/Subscriptions'
+        headers = {'content-type': 'application/json'}
+        try:
+            response = requests.get(url, headers=headers, verify=False, auth=(user, pwd), timeout=REQUEST_TIMEOUT)
+        except Exception as e:
+            logging.error("FAIL, request to list subscriptions on %s failed: %s", host, e)
+            continue
+        if response.status_code != 200:
+            logging.error("FAIL, status code for reading subscriptions on %s is not 200, code is: %s", host, response.status_code)
+            if hasattr(response, 'text'):
+                logging.error("FAIL, The response is: %s", response.text)
+            continue
+        try:
+            response_date = json.loads(response.text)
+        except Exception:
+            logging.error("FAIL, failed to parse subscriptions response from %s", host)
+            continue
+        subscriptions = response_date.get('Members') or []
+        for m in subscriptions:
+            sub_id = None
+            if isinstance(m, dict):
+                oid = m.get('@odata.id') or m.get('Id')
+                if isinstance(oid, str) and '/' in oid:
+                    sub_id = oid.rstrip('/').rsplit('/', 1)[-1]
+                else:
+                    sub_id = oid
+            else:
+                sub_id = str(m)
+            if not sub_id:
+                logging.warning("Skipping subscription entry with no id on %s: %s", host, m)
+                continue
+            delete_subscription(host, user, pwd, sub_id)
+
+
 if __name__ == "__main__":
     if args["script_examples"]:
         print_examples()
@@ -442,68 +599,71 @@ if __name__ == "__main__":
                 set_attributes(line[0], line[1], line[2], telemetry_attributes)
         sys.exit(0)
 
-    # Determine hosts from --hosts or inventory file
-    hosts_list = []
-    if args.get('hosts'):
-        hosts_list = expand_hosts_arg(args.get('hosts'))
-    elif args.get('inventory'):
-        try:
-            hosts_list = load_inventory(args.get('inventory'))
-        except Exception as e:
-            logging.error("Failed to load inventory %s: %s", args.get('inventory'), e)
-            sys.exit(1)
+    # Centralize host list loading and handle operations
+    hosts_list = load_hosts_list_from_args()
 
-    if hosts_list:
-        user = args.get('u') or os.getenv('IDRAC_USERNAME', '')
-        pwd = args.get('p') or os.getenv('IDRAC_PASSWORD', '')
+    if not hosts_list:
+        logging.warning("- WARNING, missing or incorrect arguments passed in for executing script")
+        sys.exit(1)
+
+    # Credentials (can be provided via args or env)
+    user_arg = args.get('u') or os.getenv('IDRAC_USERNAME', '')
+    pwd_arg = args.get('p') or os.getenv('IDRAC_PASSWORD', '')
+
+    # Subscription view/remove operations
+    if args.get('v'):
+        for host in hosts_list:
+            user = user_arg
+            pwd = pwd_arg
+            if not (user or pwd):
+                logging.error("Missing credentials: provide -u and -p or set IDRAC_USERNAME/IDRAC_PASSWORD")
+                sys.exit(1)
+            view_subscriptions(host, user, pwd)
+        sys.exit(0)
+
+    if args.get('subscription_remove_all'):
+        if not (user_arg or pwd_arg):
+            logging.error("Missing credentials: provide -u and -p or set IDRAC_USERNAME/IDRAC_PASSWORD")
+            sys.exit(1)
+        delete_subscriptions_all(hosts_list, user_arg, pwd_arg)
+        sys.exit(0)
+
+    # If any of the 'get' or 'test' actions are requested, run them for each host
+    if args.get('get_metric_report_definition') or args.get('get_metric_report') or args.get('test_event_id') or args.get('test_sse'):
+        for host in hosts_list:
+            user = user_arg
+            pwd = pwd_arg
+            if not (user or pwd):
+                logging.error("Missing credentials: provide -u and -p or set IDRAC_USERNAME/IDRAC_PASSWORD")
+                sys.exit(1)
+            if args.get('get_metric_report_definition'):
+                get_metric_report_definition(host, user, pwd, args.get('get_metric_report_definition'))
+            if args.get('get_metric_report'):
+                get_metric_report(host, user, pwd, args.get('get_metric_report'))
+            if args.get('test_event_id'):
+                test_destination_url = args.get('test_destination_url') or "http://{}:9000".format(LISTENER_IP)
+                test_event_type = args.get('test_event_type') or 'Alert'
+                submit_test_event(host, user, pwd, test_destination_url, test_event_type, args.get('test_event_id'))
+            if args.get('test_sse'):
+                test_sse_subscription(host, user, pwd)
+        sys.exit(0)
+
+    # Default behavior: set telemetry attributes for each host
+    for host in hosts_list:
+        user = user_arg
+        pwd = pwd_arg
         if not (user or pwd):
             logging.error("Missing credentials: provide -u and -p or set IDRAC_USERNAME/IDRAC_PASSWORD")
             sys.exit(1)
-        for host in hosts_list:
-            telemetry_attributes = get_attributes(host, user, pwd)
-            if args.get("list"):
-                logging.info("- INFO, listing telemetry attribute URIs for %s", host)
-                for uri in telemetry_attributes:
-                    print(uri)
-            else:
-                logging.info("- INFO, setting telemetry attribute URIs for %s", host)
-                set_attributes(host, user, pwd, telemetry_attributes)
-        sys.exit(0)
-
-    # Support single-host get operations via --hosts with exactly one host
-    if args.get('get_metric_report_definition') or args.get('get_metric_report'):
-        if not args.get('hosts'):
-            logging.error("Missing host: use --hosts or -f CSV or -i inventory")
-            sys.exit(1)
-        hlist = expand_hosts_arg(args.get('hosts'))
-        if len(hlist) != 1:
-            logging.error("get-metric-report-definition/get-metric-report require exactly one host in --hosts")
-            sys.exit(1)
-        single = hlist[0]
-        user = args.get('u') or os.getenv('IDRAC_USERNAME', '')
-        pwd = args.get('p') or os.getenv('IDRAC_PASSWORD', '')
-        if args.get('get_metric_report_definition'):
-            get_metric_report_definition(single, user, pwd, args.get('get_metric_report_definition'))
-        if args.get('get_metric_report'):
-            get_metric_report(single, user, pwd, args.get('get_metric_report'))
-        sys.exit(0)
-
-    # Handle --test event submission
-    if args.get('test_event_id'):
-        if not args.get('hosts'):
-            logging.error("Missing host: use --hosts or -f CSV or -i inventory")
-            sys.exit(1)
-        hlist = expand_hosts_arg(args.get('hosts'))
-        if len(hlist) != 1:
-            logging.error("--test requires exactly one host in --hosts")
-            sys.exit(1)
-        single = hlist[0]
-        user = args.get('u') or os.getenv('IDRAC_USERNAME', '')
-        pwd = args.get('p') or os.getenv('IDRAC_PASSWORD', '')
-        destination = args.get('destination_url') or "http://{}:9000".format(LISTENER_IP)
-        event_type = args.get('event_type') or 'Alert'
-        submit_test_event(single, user, pwd, destination, event_type, args.get('test_event_id'))
-        sys.exit(0)
+        telemetry_attributes = get_attributes(host, user, pwd)
+        if args.get("list"):
+            logging.info("- INFO, listing telemetry attribute URIs for %s", host)
+            for uri in telemetry_attributes:
+                print(uri)
+        else:
+            logging.info("- INFO, setting telemetry attribute URIs for %s", host)
+            set_attributes(host, user, pwd, telemetry_attributes)
+    sys.exit(0)
 
     logging.warning("- WARNING, missing or incorrect arguments passed in for executing script")
     

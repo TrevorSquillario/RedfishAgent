@@ -112,7 +112,7 @@ class RedisRedfishListenerGoTriggerPlugin(TriggerPluginInterface):
                                     return fields[bkey]
                                 return None
 
-                            raw_payload = _get_field("payload")
+                            raw_payload = _get_field("event")
                             raw_source = _get_field("source")
 
                             try:
@@ -125,6 +125,7 @@ class RedisRedfishListenerGoTriggerPlugin(TriggerPluginInterface):
                                 source = ""
 
                             try:
+                                logger.debug("Processing stream entry %s: source=%s payload=%s", entry_id, source, payload_str)
                                 payload_obj: Dict[str, Any] = json.loads(payload_str) if payload_str else {}
                             except Exception:
                                 logger.exception("Failed to parse payload JSON for entry %s", entry_id)
@@ -197,6 +198,7 @@ class RedisRedfishListenerGoTriggerPlugin(TriggerPluginInterface):
                             last_id = entry_id
 
                             try:
+                                logger.info(f"Running LLM agent for entry {entry_id} with event_id={event_id}, message_id={message_id}, source={source}, event_type={event_type}")
                                 await llm_service.run_agent(log_entry=entry_obj)
                                 try:
                                     self._redis_client.xdel(stream_name, entry_id)

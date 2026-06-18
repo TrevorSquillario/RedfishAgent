@@ -16,6 +16,7 @@ services:
     profiles:
       - all
       - metrics
+      - logs
 
   redfishagent:
     build:
@@ -33,7 +34,7 @@ services:
       retries: 5
     volumes:
       - ./redfishagent/config/config.yaml:/config/config.yaml:ro
-      - ./inventory.yaml:/config/inventory.yaml:ro
+      - ./inventory.lab.yaml:/config/inventory.yaml:ro
       - ./redfishagent:/app:cached
       - ~/redfishagent/input:/input:ro
       - ~/.cache/datalab:/root/.cache/datalab # Model cache for marker-pdf
@@ -45,7 +46,7 @@ services:
       #- REDIS_PASSWORD=
       - OPENAI_API_BASE=${OPENAI_API_BASE}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_MODEL=bg-digitalservices/Gemma-4-26B-A4B-it-NVFP4
+      - OPENAI_MODEL=${OPENAI_MODEL}
       - PROMETHEUS_URL=http://victoriametrics:8428
       - REDIS_STREAM=redfish_alerts
     networks:
@@ -56,6 +57,7 @@ services:
     profiles:
       - all
       - metrics
+      - logs
 
   redfish-listener:
     build:
@@ -91,6 +93,7 @@ services:
       - redfishagent
     profiles:
       - all
+      - logs
 
   idrac-exporter:
     #image: ghcr.io/mrlhansen/idrac_exporter:latest

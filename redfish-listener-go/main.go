@@ -8,9 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"os/signal"
 	"strings"
@@ -182,15 +182,13 @@ func (l *SSEListener) startAlertStream(bmcIP, user, pass string) {
 	log.Printf("[auth] token acquired for %s", bmcIP)
 
 	// Build SSE URL with $filter
-	baseSseUrl, err := url.Parse(fmt.Sprintf("https://%s/redfish/v1/SSE", bmcIP))
-	if err != nil {
-		log.Printf("[sse] invalid URL for %s: %v", bmcIP, err)
-		return
-	}
-	params := url.Values{}
-	params.Add("$filter", "EventType eq Event")
-	baseSseUrl.RawQuery = params.Encode()
-	finalUrl := baseSseUrl.String()
+	// Build the SSE URL while preserving percent-encoding for spaces (%20)
+	escaped := url.QueryEscape("EventFormatType eq Event")
+	escaped = strings.ReplaceAll(escaped, "+", "%20")
+	baseSseUrl := fmt.Sprintf("https://%s/redfish/v1/SSE?$filter=%s", bmcIP, escaped)
+	finalUrl := baseSseUrl
+
+	log.Printf("[sse] final SSE URL for %s: %s", bmcIP, finalUrl)
 
 	// Create go-sse client
 	sseClient := &sse.Client{
@@ -199,6 +197,8 @@ func (l *SSEListener) startAlertStream(bmcIP, user, pass string) {
 			MaxRetries: -1, // no auto-retry; we handle reconnect manually
 		},
 	}
+
+	useBasicAuth := false
 
 	// Reconnect loop
 	for {
@@ -216,82 +216,79 @@ func (l *SSEListener) startAlertStream(bmcIP, user, pass string) {
 			continue
 		}
 
-		req.Header.Set("X-Auth-Token", token)
+		// Choose auth method for this request
+		if !useBasicAuth && token != "" {
+			req.Header.Set("X-Auth-Token", token)
+			log.Printf("[auth] using token for %s", bmcIP)
+		} else {
+			req.SetBasicAuth(user, pass)
+			log.Printf("[auth] using basic auth for %s", bmcIP)
+		}
 		req.Header.Set("Accept", "text/event-stream")
+
+		// Probe the endpoint to detect 401/Unauthorized before establishing a streaming connection.
+		probeReq := req.Clone(ctx)
+		probeResp, probeErr := httpClient.Do(probeReq)
+		if probeErr != nil {
+			// network error; log and proceed to try to connect via SSE
+			log.Printf("[sse] probe failed for %s: %v", bmcIP, probeErr)
+		} else {
+			// If the probe indicates the token is rejected, switch to Basic Auth and retry.
+			if probeResp.StatusCode == http.StatusUnauthorized {
+				if !useBasicAuth {
+					log.Printf("[auth] SSE endpoint rejected token for %s (401), falling back to Basic Auth", bmcIP)
+					useBasicAuth = true
+					probeResp.Body.Close()
+					time.Sleep(1 * time.Second)
+					continue
+				}
+			}
+			probeResp.Body.Close()
+		}
 
 		conn := sseClient.NewConnection(req)
 
-		conn.SubscribeMessages(func(event sse.Event) {
-			l.handleEvent(bmcIP, event.Data)
+		conn.SubscribeToAll(func(event sse.Event) {
+			switch event.Type {
+			case "cycles", "ops":
+				fmt.Printf("Metric %s: %s\n", event.Type, event.Data)
+			case "close":
+				fmt.Println("Server closed!")
+				cancel()
+			default: // no event name
+				fmt.Printf("Handle Event %s: %s\n", event.Type, event.Data)
+				l.handleEvent(bmcIP, event.Data)
+			}
 		})
 
 		log.Printf("[sse] connecting to %s", finalUrl)
 		if connectErr := conn.Connect(); !errors.Is(connectErr, context.Canceled) {
-			log.Printf("[sse] stream interrupted for %s: %v — reconnecting in 1s", bmcIP, connectErr)
+			log.Printf("[sse] stream interrupted for %s: %v — reconnecting in 30s", bmcIP, connectErr)
 		}
-
-		time.Sleep(1 * time.Second)
+ 
+		time.Sleep(30 * time.Second)
 	}
 }
 
 // ─── Event Processing & Redis Ingestion ───
 
 func (l *SSEListener) handleEvent(bmcIP string, rawJson string) {
-	if !strings.Contains(rawJson, "MessageId") {
+	// Forward the raw SSE payload unchanged to Redis.
+	if rawJson == "" {
 		return
 	}
 
-	var payload RedfishSSEPayload
-	err := json.Unmarshal([]byte(rawJson), &payload)
-
-	if err != nil || len(payload.Events) == 0 {
-		var singleEvent iDRACLogEvent
-		if err := json.Unmarshal([]byte(rawJson), &singleEvent); err == nil && singleEvent.MessageID != "" {
-			payload.Events = []iDRACLogEvent{singleEvent}
-		} else {
-			return
-		}
-	}
-
-	for _, event := range payload.Events {
-		// Marshal this specific event for raw_json
-		eventRaw, marshalErr := json.Marshal(event)
-		if marshalErr != nil {
-			log.Printf("[parse] failed to marshal event for %s: %v", bmcIP, marshalErr)
-			continue
-		}
-
-		triagePayload := map[string]interface{}{
-			"bmc_ip":       bmcIP,
-			"timestamp":    time.Now().Unix(),
-			"event_time":   event.Created,
-			"severity":     event.Severity,
-			"message_id":   event.MessageID,
-			"message":      event.Message,
-			"args":         event.MessageArgs,
-			"category":     event.Oem.Dell.Category,
-			"component_id": event.Links.OriginOfCondition.ODataID,
-			"raw_json":     string(eventRaw),
-		}
-
-		data, marshalErr := json.Marshal(triagePayload)
-		if marshalErr != nil {
-			log.Printf("[parse] failed to marshal triage payload for %s: %v", bmcIP, marshalErr)
-			continue
-		}
-
-		cmd := l.redisClient.XAdd(l.ctx, &redis.XAddArgs{
-			Stream:     l.redisStream,
-			Values:     map[string]interface{}{"event": string(data)},
-			MaxLen:     0,
-			Approx:     true,
-			NoMkStream: false,
-		})
-		if err := cmd.Err(); err != nil {
-			log.Printf("[redis] failed to push event for %s: %v", bmcIP, err)
-		} else {
-			log.Printf("[redis] pushed event to %s", string(data))
-		}
+	cmd := l.redisClient.XAdd(l.ctx, &redis.XAddArgs{
+		Stream:     l.redisStream,
+		Values:     map[string]interface{}{"event": rawJson, "source": bmcIP},
+		MaxLen:     0,
+		Approx:     true,
+		NoMkStream: false,
+	})
+	if err := cmd.Err(); err != nil {
+		log.Printf("[redis] failed to push raw event for %s: %v", bmcIP, err)
+	} else {
+		log.Printf("[redis] pushed raw event for %s", bmcIP)
 	}
 }
 
@@ -304,6 +301,9 @@ func main() {
 	idracUser := os.Getenv("IDRAC_USERNAME")
 	idracPass := os.Getenv("IDRAC_PASSWORD")
 	inventoryURL := os.Getenv("INVENTORY_URL")
+
+	// ensure the standard logger writes to stdout so Docker captures it
+	log.SetOutput(os.Stdout)
 
 	if redisHost == "" || redisPort == "" || redisStream == "" {
 		log.Fatal("[redis] REDIS_HOST, REDIS_PORT, and REDIS_STREAM must be set")
