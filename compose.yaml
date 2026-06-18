@@ -94,9 +94,11 @@ services:
     image: idrac_exporter:mr 
     container_name: idrac-exporter
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      CONFIG_DEFAULT_USERNAME: user
-      CONFIG_DEFAULT_PASSWORD: calvin
+      CONFIG_DEFAULT_USERNAME: ${IDRAC_USERNAME}
+      CONFIG_DEFAULT_PASSWORD: ${IDRAC_PASSWORD}
       CONFIG_DEFAULT_SCHEME: https
       CONFIG_DEFAULT_PORT: 443
       CONFIG_DEFAULT_USE_BASIC_AUTH: true
